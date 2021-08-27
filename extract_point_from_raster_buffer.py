@@ -10,9 +10,11 @@ import rasterstats as rs
 #Standard libraries
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
-import swifter
+from numba import jit
+
+#import swifter
 
 #Python base libraries
 import re
@@ -50,7 +52,7 @@ def get_coords_at_point(gt, lon, lat):
 
 
 ##############
-
+@jit(nopython=True)
 def points_in_circle(circle, arr):
     '''
     A generator to return all points whose indices are within given circle.
@@ -60,6 +62,8 @@ def points_in_circle(circle, arr):
     '''
     i0,j0,r = circle
     
+    def intceil(x):
+        return int(np.ceil(x))  
 
     for i in range(intceil(i0-r),intceil(i0+r)):
         ri = np.sqrt(r**2-(i-i0)**2)
@@ -68,8 +72,7 @@ def points_in_circle(circle, arr):
                 yield arr[i][j]
 
 #            
-def intceil(x):
-    return int(np.ceil(x))                                            
+                                          
 
 #
 def coregRaster(j0,i0,data,region):
@@ -138,7 +141,7 @@ if __name__ == '__main__':
 	tic=time.time()
 	pointsfile="AUS_points_5km.shp"
 	sjer_plots_points = gpd.read_file(pointsfile)
-	sjer_plots_points=sjer_plots_points.iloc[::10, :]
+	#sjer_plots_points=sjer_plots_points.iloc[::10, :]
 	print("Read points", time.time() - tic)
 
 	folder="ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/"
@@ -161,13 +164,13 @@ if __name__ == '__main__':
 	tic=time.time()
 	sjer_plots_points["ind"] = sjer_plots_points.apply(lambda x: get_coords_at_point(gt, x.geometry.x, x.geometry.y), axis=1)
 	print("Assigned index locations to points", time.time() - tic)
+	##Try square overlaps instead of circles!!!
 
 
-
-	#tic=time.time()
-	#pop_area = sjer_plots_points.apply(lambda x: coregRaster(x.ind[0], x.ind[1],array_gdal,7), axis=1)
-	#print("Coregister raster, determine pop and area", time.time() - tic)
-	#print(np.shape(pop_area))
+	tic=time.time()
+	pop_area = sjer_plots_points.apply(lambda x: coregRaster(x.ind[0], x.ind[1],array_gdal,7), axis=1)
+	print("Coregister raster, determine pop and area", time.time() - tic)
+	print(np.shape(pop_area))
 
 	#tic=time.time()
 	#pop_area2 = sjer_plots_points.swifter.set_npartitions(16).apply(lambda x: coregRaster(x.ind[0], x.ind[1],array_gdal,7), axis=1)
@@ -182,7 +185,7 @@ if __name__ == '__main__':
 
 	tic=time.time()
 
-	intersection_results = parallelize()
+	#intersection_results = parallelize()
 	print("Done the parallel part", time.time() - tic)
 		
-	print(intersection_results)
+	#print(intersection_results)
