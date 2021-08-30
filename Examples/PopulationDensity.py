@@ -19,9 +19,12 @@ poprasts = glob.glob('ABS1x1km_Aus_Pop_Grid_2006_2020/' +
 tic=time.time()
 print("Reading points shapefile...")
 grid = gpd.read_file('AUS_points_5km.shp')
+
 print("Done in ", time.time()-tic)
 ## Add an FID in there - if one doesn't already exist
 grid.insert(0, 'FID', range(1, len(grid) + 1))
+
+#grid=grid.iloc[::100, :]
 
 
 
@@ -91,6 +94,9 @@ def coregRaster(i0,j0,data,region):
 
 	return(np.nansum(pts)/squares)
 
+#def convertKM2units(gt):
+		#figure out conversion from km to grid units
+
 def popbuff(buff):
 	#gdal_data = gdal.Open(pth)
 	gdal_band = gdal_data.GetRasterBand(1)
@@ -100,11 +106,29 @@ def popbuff(buff):
 	if np.any(array_gdal == nodataval):
 		array_gdal[array_gdal == nodataval] = np.nan
 
-	for row in grid.itertuples():
-		ind = get_coords_at_point(gt, row.geometry.x, row.geometry.y)
-		pop_area = coregRaster(ind[0], ind[1], array_gdal,7)
+	#pop=np.empty(len(grid))
+	#pop[:] = np.NaN
 
-	return(pop_area)
+	#tic=time.time()
+	grid["ind"] = grid.apply(lambda x: get_coords_at_point(gt, x.geometry.x, x.geometry.y), axis=1)
+	#print("Done indexing ", time.time()-tic)
+	#for i, row in enumerate(grid.itertuples()):
+		#print(i)
+	#	ind = get_coords_at_point(gt, row.geometry.x, row.geometry.y)
+
+	#tic=time.time()
+	#for i,row in enumerate(grid.itertuples()):
+		#print(row.ind)
+	#	pop[i]=coregRaster(row.ind[0], row.ind[1], array_gdal,buff)
+	
+	#tic=time.time()
+	#Find the buffer size in raster-index units
+	#gt[1] assumes x and y are the same size 
+	b=np.ceil(buff/gt[1])
+	pop = grid.apply(lambda x: coregRaster(x.ind[0], x.ind[1],array_gdal,b), axis=1)
+	#print("Done pop ", time.time()-tic)
+
+	return(pop)
 	
 
 ## Define a 'sumna' function that removes missing, and any negative values
@@ -124,10 +148,13 @@ def popbuffOLD(buff):
 	out = out/(b.area/1e6)
 	return out
 
-buffs = [700, 1000] #, 1500, 2000, 3000, 5000, 10000]
+
+buffs = [700, 1000, 1500, 2000, 3000, 5000, 10000]
 
 t = []
 start = time.time()
+
+#Dask or apply this
 for pth in poprasts:
 		print("Running on", pth) 
 		#with gdal.Open(pth) as gdal_data:
