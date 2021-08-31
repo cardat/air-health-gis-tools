@@ -22,6 +22,7 @@ poprasts = glob.glob('ABS1x1km_Aus_Pop_Grid_2006_2020/' +
 
 tic=time.time()
 print("Reading points shapefile...")
+#grid = gpd.read_file('singlepoint.shp')
 grid = gpd.read_file('AUS_points_5km.shp')
 
 print("Done in ", time.time()-tic)
@@ -80,8 +81,8 @@ def coregRaster(i0,j0,data,region):
 	Coregisters a point with a buffer region of a raster. 
 
 	INPUTS
-	i0: x/row-index of point of interest
-	j0: y/column-index of point of interest
+	i0: column-index of point of interest
+	j0: row-index of point of interest
 	data: two-dimensional numpy array (raster)
 	region: integer, same units as data resolution
 
@@ -96,10 +97,12 @@ def coregRaster(i0,j0,data,region):
 	#Count area that contributed to calc
 	squares= np.count_nonzero(~np.isnan(pts))
 	#each square is 1000m x 1000m
+	#each index unit is 1000m
+	
 	#Density = total vol / area 
-	#area = no. squares * 1,000,000
+	#area = no. squares 
 
-	return(np.nansum(pts)/squares/1e6)
+	return(np.nansum(pts)/squares)
 
 #def convertKM2units(gt):
 		#figure out conversion from km to grid units
@@ -127,7 +130,7 @@ def popbuff(buff):
 	
 	#Set the buffer size (in m) to index units
 	b=np.ceil(buff/gt[1])
-
+	#b=buff
 	#tic=time.time()
 	#for i,row in enumerate(grid.itertuples()):
 	#for i in range(len(grid)):
@@ -195,7 +198,7 @@ for pth in poprasts:
 		#Close gdal file
 		gdal_data=None
 
-t = dask.delayed(sum)(t)
+#t = dask.delayed(sum)(t)
 
 t = pd.concat(t)
 t2 = pd.DataFrame(t)

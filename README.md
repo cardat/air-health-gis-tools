@@ -1,33 +1,44 @@
 # Air Health GIS extract tools
 
-We w
+Currently focusing on the slowest algorithms. 
+
+Querying a point in a raster and getting a subsequent buffer around that point appears to be slowst routine.
+
+## Points for embarrassing parallelisation
+
+ * For each raster (20)
+ * For each buffer (10)
+ * For each point (1,000,000+)
 
 ### Per single point raster querey:
 
-Using "coregRaster" numpy points-in-circle approach: ```43.9 µs ± 2.1 µs```
+Original "1 - Population Density.py" code, zonalstats: ```0.1 s``` per point.
 
-Combined with numba/jit: ```21.1 µs ± 1 µs```
+Using "coregRaster" numpy points-in-circle approach: ```43.9 µs ± 2.1 µs```per point.
+
+Combined with numba/jit: ```21.1 µs ± 1 µs``` per point.
 
 
 ### Per buffer, per raster
-original "1 - Population Density.py" code: ```320 s```
+Original "1 - Population Density.py" code, "zonal stats": ```320 s``` per buffer, per raster
 
-Using dask/swifter: ```100 s```
+Using dask/swifter apply: ```100 s```
 ```
-pop_area = grid.swifter.set_npartitions(16).apply(lambda x: coregRaster(x.ind[0], x.ind[1],array_gdal,7), axis=1)
+pop_area = grid.swifter.set_npartitions(16).apply(lambda x: coregRaster(x.ind[0], x.ind[1],array_gdal,b), axis=1)
 ```
-Using dask bag:
+
+Using dask bag: ```100 s```
 ```
 bag=db.from_sequence(ind)
 pop_area = bag.map(lambda x: coregRaster(x[0], x[1],array_gdal,b)).compute()
 ```
 
-Using geopnadas apply: 50s per buffer, per raster
+Using geopnadas apply: ```50 s``` per buffer, per raster
 ```
 pop_area = grid.apply(lambda x: coregRaster(x.ind[0], x.ind[1],array_gdal,b), axis=1)
 ```
 
-Using geopandas itertuples: 17.5s
+Using geopandas itertuples: ```17.5 s``` per buffer, per raster
 ```
 for i,row in enumerate(sjer_plots_points.itertuples()):
 		ind=get_coords_at_point(gt, row.geometry.x, row.geometry.y)
