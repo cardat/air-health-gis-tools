@@ -164,7 +164,7 @@ if __name__ == "__main__":
 	t=pd.concat(dd[0])
 
 
-	print(f'Time: {time.time() - start}')
+	#print(f'Time: {time.time() - start}')
 
 	t.to_csv('popdensity3.csv')
 
