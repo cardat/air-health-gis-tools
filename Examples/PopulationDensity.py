@@ -7,31 +7,28 @@ import rasterstats as rs
 import re
 import glob
 from numba import jit
-import dask.bag as db
-
-## To see how long it takes
+import dask #.bag as db
+from dask import delayed, compute
 import time
-
+#import multiprocessing
+#pool = multiprocessing.Pool(processes=2)
 
 ## Read in population rasters
 poprasts = glob.glob('ABS1x1km_Aus_Pop_Grid_2006_2020/' +
-                     'data_provided/*.tif')
+                     'data_provided/apg0*.tif')
 
-#poprasts=glob.glob("ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/" +
-#                     "apg06e_f_001_20210512.tif")
+poprasts=["ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif"]#,
+			#"ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg09e_f_001_20210512.tif"]
 
 tic=time.time()
 print("Reading points shapefile...")
-#grid = gpd.read_file('singlepoint.shp')
-grid = gpd.read_file('AUS_points_5km.shp')
+grid = gpd.read_file('singlepoint.shp')
+#grid = gpd.read_file('AUS_points_5km.shp')
 
 print("Done in ", time.time()-tic)
 ## Add an FID in there - if one doesn't already exist
 grid.insert(0, 'FID', range(1, len(grid) + 1))
-
 #grid=grid.iloc[::100, :]
-
-
 
 @jit(nopython=True)
 def get_coords_at_point(gt, lon, lat):
@@ -54,7 +51,6 @@ def get_coords_at_point(gt, lon, lat):
 	col = int((lat - gt[3])/gt[5])
 	return (col, row)
 
-
 @jit(nopython=True)
 def points_in_circle(circle, arr):
 	'''
@@ -75,7 +71,6 @@ def points_in_circle(circle, arr):
 				yield arr[i][j]        
 										  
 
-#
 def coregRaster(i0,j0,data,region):
 	'''
 	Coregisters a point with a buffer region of a raster. 
@@ -103,6 +98,38 @@ def coregRaster(i0,j0,data,region):
 	#area = no. squares 
 
 	return(np.nansum(pts)/squares)
+
+@jit(nopython=True)
+def coregRasterSquare(i0,j0,data,region):
+    '''
+    Finds the mean value of a raster, around a point with a specified radius.
+    point - array([longitude,latitude])
+    data - array
+    region - integer in index units
+    '''
+    minx=i0-region
+    maxx=i0+region
+    miny=j0-region
+    maxy=j0+region
+    
+    arrshp = np.shape(data)
+    
+    if minx < 0:
+        minx = 0
+    if maxx > arrshp[0]:
+        maxx = arrshp[0]
+    if miny < 0:
+        miny = 0
+    if maxy > arrshp[1]:
+        maxy = arrshp[1]
+        
+    pts=data[minx:maxx,miny:maxy] 
+    squares= np.count_nonzero(~np.isnan(pts))
+
+    if squares==0:
+        return(0)
+    else:
+        return(np.nansum(pts)/squares)
 
 #def convertKM2units(gt):
 		#figure out conversion from km to grid units
@@ -139,11 +166,11 @@ def popbuff(buff):
 	#print("Done pop range", time.time()-tic) #~14 sec for full 5km
 
 	#Find the buffered population density at each point in the grid.
-	tic=time.time()
+	#tic=time.time()
 	for i,row in enumerate(grid.itertuples()):
 		#pop[i]=coregRaster(row.ind[0], row.ind[1], array_gdal,b)
 		ind=get_coords_at_point(gt, row.geometry.x, row.geometry.y)
-		pop[i]=coregRaster(ind[0], ind[1], array_gdal,b)
+		pop[i]=coregRasterSquare(ind[0], ind[1], array_gdal,b)
 
 	#print("Done pop itertuples ", time.time()-tic) #
 	
@@ -152,7 +179,7 @@ def popbuff(buff):
 	#gt[1] assumes x and y are the same size 
 	
 	#pop = grid.apply(lambda x: coregRaster(x.ind[0], x.ind[1],array_gdal,b), axis=1)
-	print("Done pop ", time.time()-tic)
+	#print("Done pop ", time.time()-tic)
 
 	return(pop)
 	
@@ -175,36 +202,98 @@ def popbuffOLD(buff):
 	return out
 
 
-buffs = [700, 1000, 1500, 2000, 3000, 5000, 10000]
-bag=db.from_sequence(buffs)
+buffs = [700, 1000,25000] #, 1500, 2000, 3000, 5000, 10000]
+#bag=db.from_sequence(buffs)
 
-t = []
+
 start = time.time()
 
+#buff=25000
+#popdf=[]
 
-
+#print(popdf)
 #Dask or apply this
-for pth in poprasts:
-		print("Running on", pth) 
+@delayed
+def poprast_prep(pth):
+
+#for pth in poprasts:
+		#print("Running on", pth) 
 		#with gdal.Open(pth) as gdal_data:
 		gdal_data = gdal.Open(pth)
 		yr = str(20) + re.sub(".*(apg|APG)(\\d{2}).*", "\\2", pth)
-		popdf = list(map(popbuff, buffs))
+
+		###
+		gdal_band = gdal_data.GetRasterBand(1)
+		nodataval = gdal_band.GetNoDataValue()
+		array_gdal = gdal_data.ReadAsArray().astype(np.float)
+		gt = gdal_data.GetGeoTransform()
+		if np.any(array_gdal == nodataval):
+			array_gdal[array_gdal == nodataval] = np.nan
+
+		#Create an empty array to store the results in.
+		pop=np.empty(len(grid))
+		pop[:] = np.NaN
+
+		popdf=[]
+		for buff in buffs:
+			#Set the buffer size (in m) to index units
+			b=np.ceil(buff/gt[1])
+
+			tic=time.time()
+			for i,row in enumerate(grid.itertuples()):
+				#pop[i]=coregRaster(row.ind[0], row.ind[1], array_gdal,b)
+				ind=get_coords_at_point(gt, row.geometry.x, row.geometry.y)
+				pop[i]=coregRaster(ind[0], ind[1], array_gdal,b)
+			
+			print(pop)
+			#popdf.append(pop)
+			print("Done pop",pth,buff,pop, time.time()-tic)
+		
+		popdf = gpd.GeoDataFrame(pop, index = ["popdens" + str(b) for b in buffs]).T
+		
+		##################3
+		#popdf = pool.map(popbuff, buffs)
+		#popdf = list(map(popbuff, buffs))
+		#print(popdf)
 		#popdf = bag.map(popbuff).compute()
-		popdf = gpd.GeoDataFrame(popdf, index = ["popdens" + str(b) for b in buffs]).T
+		#popdf = gpd.GeoDataFrame(popdf, index = ["popdens" + str(b) for b in buffs]).T
 		popdf.insert(0, 'FID', grid.FID)
 		popdf.insert(0, 'year', yr)
-		t.append(popdf)
+		print(popdf)
+
 		#Close gdal file
 		gdal_data=None
 
+		return(popdf)
+		#t.append(popdf)
+
+t = []
+for pth in poprasts:
+	t.append(poprast_prep(pth))
+
+print(t)
+print("Finished appending")
+
+tic=time.time()
+dd=compute(t)
+print(dd)
+print("Done dask:",time.time()-tic)
+
+#popdf=pd.concat(t)
+#popdf = gpd.GeoDataFrame(t[0], index = ["popdens" + str(b) for b in buffs])
+#print(popdf)
+#popdf.insert(0, 'FID', t[1])
+#popdf.insert(0, 'year', t[2])
+
+#t=pd.concat(t)
+#print(t)
 #t = dask.delayed(sum)(t)
 
-t = pd.concat(t)
-t2 = pd.DataFrame(t)
+#t = pd.concat(t)
+#t2 = pd.DataFrame(t)
 
 print(f'Time: {time.time() - start}')
 
-t2.to_csv('popdensity2.csv')
+#t2.to_csv('popdensity2.csv')
 
 ### Convert to RDS in R

@@ -15,8 +15,12 @@ Querying a point in a raster and getting a subsequent buffer around that point a
 Original "1 - Population Density.py" code, zonalstats: ```0.1 s``` per point.
 
 Using "coregRaster" numpy points-in-circle approach: ```43.9 µs ± 2.1 µs```per point.
+This algorithm has about a 1% difference to that returned by zonalstats.
 
 Combined with numba/jit: ```21.1 µs ± 1 µs``` per point.
+
+Using a square buffer region instead of a circle increase the speed to: ```2.79 µs ± 3.64 µs```
+But this coincides with an difference in reported results of around 10% compared with zonalstats.
 
 
 ### Per buffer, per raster
@@ -44,3 +48,5 @@ for i,row in enumerate(sjer_plots_points.itertuples()):
 		ind=get_coords_at_point(gt, row.geometry.x, row.geometry.y)
 		pop[i]=coregRaster(ind[0], ind[1], array_gdal,b)
 ```
+
+
