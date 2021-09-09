@@ -13,6 +13,34 @@ import time
 #import multiprocessing
 #pool = multiprocessing.Pool(processes=2)
 
+from scipy.signal import convolve2d
+
+
+def buffer_convolve2d(x,buffer):
+    kernel = create_buffer(buffer)
+
+    neighbor_sum = convolve2d(
+        x, kernel, mode='same',
+        boundary='fill', fillvalue=0)
+
+    num_neighbor = convolve2d(
+        np.ones(x.shape), kernel, mode='same',
+        boundary='fill', fillvalue=0)
+
+    return(neighbor_sum / num_neighbor)
+
+def create_buffer(r, center=None, radius=None):
+
+    if center is None: # use the middle of the image
+        center = (int(r/2), int(r/2))
+    if radius is None: # use the smallest distance between the center and image walls
+        radius = min(center[0], center[1], r-center[0], r-center[1])
+
+    Y, X = np.ogrid[:r, :r]
+    dist_from_center = np.sqrt((X - center[0])**2 + (Y-center[1])**2)
+
+    mask = dist_from_center <= radius
+    return(mask*1.0)
 
 
 @jit(nopython=True)
@@ -92,6 +120,44 @@ def coregRaster(i0,j0,data,region):
 
 @delayed
 def poprast_prep(pth,grid,buffs):
+
+	print("Running on", pth) 
+
+	#Open the raster file and set it up
+	gdal_data = gdal.Open(pth)
+	gdal_band = gdal_data.GetRasterBand(1)
+	nodataval = gdal_band.GetNoDataValue()
+	array_gdal = gdal_data.ReadAsArray().astype(np.float)
+	gt = gdal_data.GetGeoTransform()
+	if np.any(array_gdal == nodataval):
+		array_gdal[array_gdal == nodataval] = np.nan
+
+	t1=time.time()
+	grid["ind"] = grid.apply(lambda x: get_coords_at_point(gt, x.geometry.x, x.geometry.y), axis=1)
+	print("Indexed points", pth, "Time:",time.time()-t1)
+
+	poplist = []
+	for buff in buffs:
+		b=np.ceil(buff/gt[1])
+		t1=time.time()
+		y2_large = buffer_convolve2d(array_gdal,b)
+		pop = [y2_large[x] for x in grid["ind"]]
+		poplist.append(pop.tolist())
+		print("Done pop", buff, pth, "Time:",time.time()-t1)
+
+	yr = str(20) + re.sub(".*(apg|APG)(\\d{2}).*", "\\2", pth)
+
+	popdf = gpd.GeoDataFrame(poplist, index = ["popdens" + str(b) for b in buffs]).T
+	popdf.insert(0, 'FID', grid.FID)
+	popdf.insert(0, 'year', yr)
+
+	gdal_data=None
+
+	return(popdf)
+
+
+@delayed
+def poprast_prepOLD(pth,grid,buffs):
 		print("Running on", pth) 
 
 		#Open the raster file and set it up
@@ -151,12 +217,15 @@ if __name__ == "__main__":
 	grid = gpd.read_file('AUS_points_5km.shp')
 	## Add an FID in there - if one doesn't already exist
 	grid.insert(0, 'FID', range(1, len(grid) + 1))
+
 	print("Done in ", time.time()-tic)
 
 	t = []
 	for pth in poprasts:
 		t.append(poprast_prep(pth,grid,buffs))
+		#dd=poprast_prep(pth,grid,buffs)
 
+	
 	print("Finished appending, running compute...")
 	tic=time.time()
 	dd=compute(t,scheduler='processes', num_workers=2)
