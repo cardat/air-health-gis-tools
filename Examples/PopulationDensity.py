@@ -82,6 +82,8 @@ def coregRaster(i0,j0,data,region):
 	#Density = total vol / area 
 	#area = no. squares 
 
+	#Question - do you count the entire area or just the valid points
+	#Does a nan equal a 0 when considering area?
 	return(np.nansum(pts)/squares)
 
 #def convertKM2units(gt):
@@ -136,13 +138,13 @@ def poprast_prep(pth,grid,buffs):
 if __name__ == "__main__":
 
 	## Read in population rasters
-	poprasts = glob.glob('ABS1x1km_Aus_Pop_Grid_2006_2020/' +
-                     'data_provided/*.tif')
+	#poprasts = glob.glob('ABS1x1km_Aus_Pop_Grid_2006_2020/' +
+    #                 'data_provided/*.tif')
 
-	#poprasts=["ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif",
-	#			"ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg09e_f_001_20210512.tif"]
+	poprasts=["ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif",
+				"ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg09e_f_001_20210512.tif"]
 
-	buffs = [700, 1000, 1500, 2000, 3000, 5000, 10000]
+	buffs = [700] #, 1000, 1500, 2000, 3000, 5000, 10000]
 
 	tic=time.time()
 	print("Reading points shapefile...")
@@ -157,7 +159,7 @@ if __name__ == "__main__":
 
 	print("Finished appending, running compute...")
 	tic=time.time()
-	dd=compute(t,scheduler='processes', num_workers=4)
+	dd=compute(t,scheduler='processes', num_workers=2)
 	print("Done dask:",time.time()-tic)
 
 

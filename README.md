@@ -49,4 +49,4 @@ for i,row in enumerate(sjer_plots_points.itertuples()):
 		pop[i]=coregRaster(ind[0], ind[1], array_gdal,b)
 ```
 
-
+1380 s for all rasters and all buffers!
