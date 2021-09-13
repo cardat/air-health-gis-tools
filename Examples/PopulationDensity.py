@@ -135,7 +135,7 @@ def cartesian_product(*arrays):
         arr[...,i] = a
     return arr.reshape(-1, la)
 
-@delayed
+#@delayed
 def poprast_prep(pth,grid,buffs,g):
 
 	print("Running on", pth) 
@@ -165,7 +165,7 @@ def poprast_prep(pth,grid,buffs,g):
 	starty=gt[3]
 	stepy=gt[5]
 	endy=starty+(np.shape(array_gdal)[0]+1)*stepy
-	yy = np.arange(endy,starty,-stepy)
+	yy = np.arange(starty,endy,stepy)
 	print(xx,yy)
 	arr = cartesian_product(yy, xx)
 
@@ -175,6 +175,11 @@ def poprast_prep(pth,grid,buffs,g):
 	print(g)
 	
 	tic=time.time()
+	#100,000 = 1s
+	#1,000,000 = 7s
+	#5,000,000 = 70s
+	#10,000,000 = 224s
+	#30,000,000 = 600s
 	tree = scipy.spatial.cKDTree(arr)
 	print("Made tree from gdal in",time.time()-tic)
 
@@ -266,7 +271,7 @@ if __name__ == "__main__":
 	t = []
 	for pth in poprasts:
 		t.append(poprast_prep(pth,grid,buffs,g))
-		#dd=poprast_prep(pth,grid,buffs)
+		#dd=poprast_prep(pth,grid,buffs,g)
 
 	#client = Client()
 
