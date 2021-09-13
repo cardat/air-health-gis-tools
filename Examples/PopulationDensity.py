@@ -141,8 +141,18 @@ def poprast_prep(pth,grid,buffs):
 		array_gdal[array_gdal == nodataval] = np.nan
 
 	t1=time.time()
-	grid["ind"] = grid.apply(lambda x: get_coords_at_point(gt, x.geometry.x, x.geometry.y), axis=1)
-	print("Indexed points", pth, "Time:",time.time()-t1)
+	print("Read",pth[-26:-20],",finding indexes...")
+	ind=[]
+	for row in grid.itertuples():
+		ind.append(get_coords_at_point(gt, row.geometry.x, row.geometry.y))
+
+	grid["ind"]=ind
+	print("Indexed points loop", pth[-26:-20], "Time:",time.time()-t1)
+
+	#loop is 10x faster than apply
+	#t1=time.time()
+	#grid["ind"] = grid.apply(lambda x: get_coords_at_point(gt, x.geometry.x, x.geometry.y), axis=1)
+	#print("Indexed points", pth, "Time:",time.time()-t1)
 
 	poplist = []
 	for buff in buffs:
@@ -217,22 +227,22 @@ def poprast_prepOLD(pth,grid,buffs):
 if __name__ == "__main__":
 
 	## Read in population rasters
-	#poprasts = glob.glob('ABS1x1km_Aus_Pop_Grid_2006_2020/' +
-    #                 'data_provided/*.tif')
+	poprasts = glob.glob('ABS1x1km_Aus_Pop_Grid_2006_2020/' +
+                     'data_provided/*.tif')
 
-	poprasts=["ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif",
-				"ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg09e_f_001_20210512.tif"]
+	#poprasts=["ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif",
+	#			"ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg09e_f_001_20210512.tif"]
 
 	buffs = [700, 1000, 1500, 2000, 3000, 5000, 10000]
 
 	tic=time.time()
 	print("Reading points shapefile...")
-	#grid = gpd.read_file('AUS_points_5km.shp')
-	grid = gpd.read_file('point03.shp')
+	grid = gpd.read_file('AUS_points_1km.shp')
+	#grid = gpd.read_file('point03.shp')
 	## Add an FID in there - if one doesn't already exist
 	grid.insert(0, 'FID', range(1, len(grid) + 1))
 
-	print("Done in ", time.time()-tic)
+	print("Done in ", time.time()-tic,np.shape(grid))
 
 	t = []
 	for pth in poprasts:
@@ -243,7 +253,7 @@ if __name__ == "__main__":
 
 	print("Finished appending, running compute...")
 	tic=time.time()
-	dd=compute(t,scheduler="multiprocessing",num_workers=2)
+	dd=compute(t,scheduler="multiprocessing",num_workers=6)
 	print("Done dask:",time.time()-tic)
 
 
@@ -252,6 +262,6 @@ if __name__ == "__main__":
 
 	#print(f'Time: {time.time() - start}')
 
-	t.to_csv('sixpopscipy.csv')
+	t.to_csv('pop1km.csv')
 
 ### Convert to RDS in R
