@@ -252,7 +252,6 @@ def poprast_prep(pth,grid,buffs,gt0):
 
 		write_raster(density_array,gt,wkt,gdal_band,nodataval)
 		#Find the value of the convolved array at each point of interest
-		[print(x) for x in grid["ind"]]
 		pop = [density_array[x] for x in grid["ind"]]
 		poplist.append(pop)
 		print("Done pop! Buffer:", buff, "Buffer (index):", b, pth[-25:-20], "Time:",np.round(time.time()-t1,2),"s")
