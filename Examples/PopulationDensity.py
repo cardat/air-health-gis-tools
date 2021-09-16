@@ -250,7 +250,7 @@ def poprast_prep(pth,grid,buffs,gt0):
 		#Run the convolution with the buffer
 		density_array = buffer_convolve2d(array_gdal,b)
 
-		write_raster(density_array,gt,wkt,gdal_band,nodataval)
+		#write_raster(density_array,gt,wkt,gdal_band,nodataval)
 		#Find the value of the convolved array at each point of interest
 		pop = [density_array[x] for x in grid["ind"]]
 		poplist.append(pop)
