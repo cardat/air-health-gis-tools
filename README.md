@@ -51,6 +51,10 @@ for i,row in enumerate(sjer_plots_points.itertuples()):
 
 1380 s for all rasters and all buffers!
 
+### Tried
+Using scipy kd tree to build index of the raster points. Then would query the points of interest. Any raster larger than 25,000,000 (5000x5000 array) points takes over 10 minutes to build an index. 
+
+
 
 # Considerations
 
