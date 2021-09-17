@@ -1,14 +1,25 @@
 # Air Health GIS extract tools
 
-Currently focusing on the slowest algorithms. 
-
-Querying a point in a raster and getting a subsequent buffer around that point appears to be slowst routine.
-
 ## Points for embarrassing parallelisation
 
  * For each raster (20)
  * For each buffer (10)
  * For each point (1,000,000+)
+ 
+## Considerations
+
+The radius of the buffer may intersect a raster cell. In this case the raster cell is included within the buffer calc if it less than  ceil(buffer/cell size)
+
+Ivan has suggested converting all underlying grids/shapefiles/polygons to a single file format. This could be a good way forward as the routine for for extracting from a raster is pretty good now.
+
+The 5 generic types of GIS extractions are all listed as "extract_lblahblah.py". These will be templates to make a script for each of the layers listed in the xlsx. I think each layer will need to be approached uniquely though, as small things like band names, file-naming conventions, will all be different (bringing us back to the approach sugested by Ivan to homogenise the inputs).
+
+
+## extract_points_from_raster_buffer
+Currently focusing on the slowest algorithms. 
+
+Querying a point in a raster and getting a subsequent buffer around that point appears to be slowst routine.
+
 
 ### Per single point raster querey:
 
@@ -56,7 +67,5 @@ Using scipy kd tree to build index of the raster points. Then would query the po
 
 
 
-# Considerations
 
-The radius of the buffer may intersect a raster cell. In this case the raster cell is included within the buffer calc if it less than  ceil(buffer/cell size)
 
