@@ -12,10 +12,11 @@ The radius of the buffer may intersect a raster cell. In this case the raster ce
 
 Ivan has suggested converting all underlying grids/shapefiles/polygons to a single file format. This could be a good way forward as the routine for for extracting from a raster is pretty good now.
 
-The 5 generic types of GIS extractions are all listed as "extract_lblahblah.py". These will be templates to make a script for each of the layers listed in the xlsx. I think each layer will need to be approached uniquely though, as small things like band names, file-naming conventions, will all be different (bringing us back to the approach sugested by Ivan to homogenise the inputs).
+The 5 generic types of GIS extractions are all listed as "extract_lblahblah.py". These will be templates to make a script for each of the layers listed in the xlsx. I think each layer will need to be approached uniquely though, as small things like band names, file-naming conventions, will all be different (bringing us back to the approach sugested by Ivan to homogenise the inputs). So far only, 1 layer is finished in the Examples folder.
 
+**utils.py** contains all the helper functions, that may need more generalising as each of the 5 extraction methods are implemented.
 
-## extract_points_from_raster_buffer
+## extract_points_from_raster_buffer.py - done
 Currently focusing on the slowest algorithms. 
 
 Querying a point in a raster and getting a subsequent buffer around that point appears to be slowst routine.
@@ -62,10 +63,19 @@ for i,row in enumerate(sjer_plots_points.itertuples()):
 
 1380 s for all rasters and all buffers!
 
-### Tried
+Using convolution of the raste with a buffer-kernel combined with the itertuples is the fastest appraoch and scales to at least a 1-km resolution grid-as implemented.
+
+### Tried and failed
 Using scipy kd tree to build index of the raster points. Then would query the points of interest. Any raster larger than 25,000,000 (5000x5000 array) points takes over 10 minutes to build an index. 
 
 
+## extract_count_points_in_buffer.py - todo
+
+## extract_lines_in_buffer.py - todo
+
+## extract_point_from_raster.py - todo
+
+## extract_polygon_in_buffer.py - todo
 
 
 
