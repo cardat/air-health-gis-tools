@@ -54,5 +54,5 @@ for i,row in enumerate(sjer_plots_points.itertuples()):
 
 # Considerations
 
-The radius of the buffer may intersect a raster cell. In this case the raster cell is usually included if it less than ceil(buffer index).
+The radius of the buffer may intersect a raster cell. In this case the raster cell is included within the buffer calc if it less than  ceil(buffer/cell size)
 

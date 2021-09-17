@@ -1,169 +1,153 @@
-#Geo libraries
-import rasterio
-import geopandas as gpd
-from osgeo import gdal
-from osgeo import osr
-from osgeo import ogr 
-import shapefile
-import rasterstats as rs
-
-#Standard libraries
-import pandas as pd
-import numpy as np
-#import matplotlib.pyplot as plt
-
-#Python base libraries
-import re
-import glob
-import multiprocessing as mp
-import time
-
-import numba
-
-#JIT directives applied to functions apply numbas'
-#llvm compiler. That should speed stuff up.
-from numba import jit
-
-import swifter
-from numba import cuda
-
-import dask.dataframe as dd
-from dask.multiprocessing import get
-
-#conda install -c conda-forge gdal
-#pip install arcgis
-#conda install -c esri arcgis
+from utils import *
 
 
+@delayed
+def poprast_prep(pth,grid,buffs,gt0):
+	#Read in current raster
+	print("Running on", pth) 
+	array_gdal, gt,wkt,gdal_band,nodataval = open_gdal(pth)
+	print("Shape of array_gdal:",np.shape(array_gdal))
 
-#### Functions #####
-## Will eventually move these to generic file for use by all
-## extract tools.
-####
+	#If this raster is different the first raster we must re build our trees/indexes
+	if gt != gt0:
+		print("Different raster extent detected")
+		# #Make the tree
+		# # tree=array2tree(array_gdal,gt)
 
-
-@jit(nopython=True)
-def get_coords_at_point(gt, lon, lat):
-	'''
-	Given a point in some coordinate reference (e.g. lat/lon)
-	Find the closest point to that in an array (e.g. a raster)
-	and return the index location of that point in the raster.
-	
-	INPUTS
-	gt: output from "gdal_data.GetGeoTransform()"
-	lon: x/row-coordinate of interest
-	lat: y/column-coordinate of interest
-
-	RETURNS
-	col: y index value from the raster
-	row: x index value from the raster
-	'''
-
-	row = int((lon - gt[0])/gt[1])
-	col = int((lat - gt[3])/gt[5])
-	return (col, row)
-
-
-@jit(nopython=True)
-def points_in_circle(circle, arr):
-	'''
-	A generator to return all points whose indices are within a given circle.
-	http://stackoverflow.com/a/2774284
-	Warning: If a point is near the the edges of the raster it will not loop 
-	around to the other side of the raster!
-	'''
-	i0,j0,r = circle
-	
-	def intceil(x):
-		return int(np.ceil(x))  
-
-	for i in range(intceil(i0-r),intceil(i0+r)):
-		ri = np.sqrt(r**2-(i-i0)**2)
-		for j in range(intceil(j0-ri),intceil(j0+ri)):
-			if (i >= 0 and i < len(arr[:,0])) and (j>=0 and j < len(arr[0,:])):               
-				yield arr[i][j]        
-										  
-
-#
-def coregRaster(i0,j0,data,region):
-	'''
-	Coregisters a point with a buffer region of a raster. 
-
-	INPUTS
-	i0: x/row-index of point of interest
-	j0: y/column-index of point of interest
-	data: two-dimensional numpy array (raster)
-	region: integer, same units as data resolution
-
-	RETURNS
-	pts: all values from array within region
-
-
-	'''
-	pts_iterator = points_in_circle((i0,j0,region), data)
-	pts = np.array(list(pts_iterator))
-
-	#Count area that contributed to calc
-	squares= np.count_nonzero(~np.isnan(pts))
-
-	return(np.nansum(pts),squares)
-
-
-#####################
-
-if __name__ == '__main__':
-	
-	print("Running...")
-	tic=time.time()
-	pointsfile="AUS_points_5km.shp"
-	sjer_plots_points = gpd.read_file(pointsfile)
-	#sjer_plots_points=sjer_plots_points.iloc[::10, :]
-	print("Read points", time.time() - tic)
-
-	folder="ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/"
-	tiffile="apg06e_f_001_20210512.tif"
-
-	##GDAL
-	tic=time.time()
-	gdal_data = gdal.Open(folder+tiffile)
-	gdal_band = gdal_data.GetRasterBand(1)
-	nodataval = gdal_band.GetNoDataValue()
-	array_gdal = gdal_data.ReadAsArray().astype(np.float)
-	gt = gdal_data.GetGeoTransform()
-
-	if np.any(array_gdal == nodataval):
-		array_gdal[array_gdal == nodataval] = np.nan
+		####Index with tree
+		# tic=time.time()
+		# _, indexes = tree.query(g)
+		# print("Queried tree in",time.time()-tic)
+		# tic=time.time()
+		# arrind = list(zip(*np.unravel_index(indexes,np.shape(array_gdal))))
+		# dfind=pd.Series(arrind)
+		# grid['ind'] = dfind 
+		# print("Zipped index index in",time.time()-tic)
 		
-	print("Read Raster with GDAL", time.time() - tic)
-	print(np.shape(array_gdal))
+		#print(grid["ind"])
 
+		####Index with loop
+		t1=time.time()
+		print("Read",pth[-25:-20],",finding indexes...")
+		ind=[]
+		for row in grid.itertuples():
+			#print(row.geometry.x, row.geometry.y)
+			ind.append(get_coords_at_point(gt, row.X, row.Y))
+
+		grid["ind"]=ind
+		#print(grid["ind"])
+
+		print("Indexed points loop", pth[-25:-20], "Time:",np.round(time.time()-t1,2),"s")
+
+		####Index with apply
+		#loop is 10x faster than apply
+		#t1=time.time()
+		#grid["ind"] = grid.apply(lambda x: get_coords_at_point(gt, x.geometry.x, x.geometry.y), axis=1)
+		#print(grid["ind"])
+		#print("Indexed points", pth, "Time:",time.time()-t1)
+
+    #Each buffer will be added to a list, then convert to a dataframe
+	poplist = []
+	for buff in buffs:
+		t1=time.time()   
+		#Set buffer to index units
+		b=np.ceil(buff/gt[1])
+
+		#Run the convolution with the buffer
+		density_array = buffer_convolve(array_gdal,b)
+		
+        #Write out the buffered raster, if you want.
+		#write_raster(density_array,gt,wkt,gdal_band,nodataval)
+        
+		#Find the value of the convolved array at each point of interest
+		pop = [density_array[x] for x in grid["ind"]]
+        
+        #Add it to the buffer-list.
+		poplist.append(pop)
+        
+		print("Done pop! Buffer:", buff, "Buffer (index):", b, pth[-25:-20], "Time:",np.round(time.time()-t1,2),"s")
+
+    #Add additional header
+	yr = str(20) + re.sub(".*(apg|APG)(\\d{2}).*", "\\2", pth)
+	#print(poplist)
+	popdf = gpd.GeoDataFrame(poplist, index = ["popdens" + str(b) for b in buffs]).T
+	popdf.insert(0, 'FID', grid.FID)
+	popdf.insert(0, 'year', yr)
+
+	#Free up mem
+	gdal_data=None
+
+	return(popdf)
+
+
+############
+
+if __name__ == "__main__":
+
+	## Read in population rasters
+	poprasts = glob.glob('ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif')
+
+	#poprasts=["ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif"]#,
+	#			"ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg09e_f_001_20210512.tif"]
+
+	buffs = [700, 1000, 1500, 2000, 3000, 5000, 10000]
+
+	t1=time.time()
+	print("Reading points rds file...")
+	grid = pyreadr.read_r('AUS_points_5km.rds')
+	grid=list(grid.items())[0][1]
+	#grid=grid.iloc[0:100, :]
+
+	##Shapefile
+	#grid = gpd.read_file('AUS_points_1km.shp')
+	#g = np.column_stack((grid.geometry.x.to_list(),grid.geometry.y.to_list()))
+	#grid = pd.DataFrame(g,columns=["X","Y"])
+	#grid.insert(0, 'FID', range(1, len(grid) + 1))
+
+
+	#For tree
+	#g = np.column_stack((grid.geometry.x.to_list(),grid.geometry.y.to_list()))
+	#print("Stacked points in",time.time()-tic)
+	
+	print("Done in ", np.round(time.time()-t1,2),"s",np.shape(grid))
+
+	## Get the raster information from the first grid
+	array_gdal, gt,_,_,_ = open_gdal(poprasts[0])
+
+	#Make a KD tree (assuming all tifs will have the same dimensions;
+	# if not, the tree will be re-built on each loop through the raster).
+	#tree=array2tree(array_gdal,gt)
+
+	t1=time.time()
+	print("Finding indexes...for grid")
+	ind=[]
+	for row in grid.itertuples():
+		#print(row.geometry.x, row.geometry.y)
+		ind.append(get_coords_at_point(gt, row.X, row.Y))
+
+	grid["ind"]=ind
+	print("Indexed points loop:", np.round(time.time()-t1,2),"s")
+
+	#Create the dask delayed object to submit to multiple workers
+	#Or loop through the rasters and run
+	t = []
+	for pth in poprasts:
+		#For dask:
+		t.append(poprast_prep(pth,grid,buffs,gt))
+		#No dask:
+		#dd=poprast_prep(pth,grid,buffs,gt)
+
+	#Run compute with dask
+	print("Finished appending, running dask compute...")
 	tic=time.time()
-	sjer_plots_points["ind"] = sjer_plots_points.apply(lambda x: get_coords_at_point(gt, x.geometry.x, x.geometry.y), axis=1)
-	print("Assigned index locations to points", time.time() - tic)
+	dd=compute(t,scheduler="multiprocessing")
+	#Combine all the runs
+	t=pd.concat(dd[0])
+	print("Done dask:",np.round(time.time()-t1,2),"s")
+
 	
 
-
-	tic=time.time()
-	for row in sjer_plots_points.itertuples():
-		pop_area = coregRaster(row.ind[0], row.ind[1],array_gdal,7)
-	#pop_area = sjer_plots_points.apply(lambda x: coregRaster(x.ind[0], x.ind[1],array_gdal,7), axis=1)
-	print("Coregister raster, determine pop and area", time.time() - tic)
-	print(np.shape(pop_area))
-
-	#tic=time.time()
-	#pop_area2 = sjer_plots_points.swifter.set_npartitions(16).apply(lambda x: coregRaster(x.ind[0], x.ind[1],array_gdal,7), axis=1)
-	#print("Swifted raster, determine pop and area", time.time() - tic)
-	#print(np.shape(pop_area2))
-
-	cpus = mp.cpu_count()
-	print(cpus)
-
-	pool = mp.Pool(processes=cpus)
-	pool.close
-
-	tic=time.time()
-
-	#intersection_results = parallelize()
-	print("Done the parallel part", time.time() - tic)
-		
-	#print(intersection_results)
+	#Save the result to a file
+	outfile="popdensity.csv"
+	t.to_csv(outfile,index=False)
+	print("Finished and saved output to:", outfile)

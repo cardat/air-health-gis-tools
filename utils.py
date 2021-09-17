@@ -11,18 +11,22 @@ import dask #.bag as db
 from dask import delayed, compute
 import time
 import scipy
-from scipy.signal import convolve2d
-from scipy.ndimage import convolve
+#from scipy.signal import convolve2d
+#from scipy.ndimage import convolve
+#use atropy convolution to deal with nans
+from astropy.convolution import convolve
 import pyreadr
 
+print("Imported modules successfully.")
 
-def buffer_convolve2d(x,buffer):
+def buffer_convolve(x,buffer):
 	#Make a panning window/kernel represented by 1/0 circle array
 	kernel = create_buffer(buffer)
-	print(np.shape(kernel))
+	#print(np.shape(kernel))
 
 	#Run the convolution over the entire array with the buffer kernel
-	neighbor_sum = convolve(x, kernel, mode='constant', cval=0)
+	neighbor_sum = convolve(x, kernel, boundary='fill', fill_value=0,
+		normalize_kernel=False,nan_treatment='fill',preserve_nan=True)
 	#Sum up the number of cells used in the kernel (to find area)
 	num_neighbor = np.count_nonzero(kernel)
 
@@ -35,7 +39,8 @@ def create_buffer(r, center=None):
 	#Make an list of indexes 
 	Y,X = np.ogrid[0:2*r-1, 0:2*r-1]
 	dist_from_center = np.sqrt((X-r+1)**2 + (Y-r+1)**2)+1
-	mask = dist_from_center < r
+	mask = dist_from_center <= r
+	#print(mask*1)
 	return(mask*1.0)
 
 
@@ -196,143 +201,6 @@ def array2tree(array_gdal,gt):
 	print("Made tree from gdal in",time.time()-tic)
 	return(tree)
 
-@delayed
-def poprast_prep(pth,grid,buffs,gt0):
 
-	print("Running on", pth) 
-	
-	#Read in array
-	array_gdal, gt,wkt,gdal_band,nodataval = open_gdal(pth)
-	
-	print("Shape of array_gdal:",np.shape(array_gdal))
-
-	# # If the array is different to our first one must re build our trees/arrays
-	if gt != gt0:
-		print("Different raster extent detected")
-		# #Make the tree
-		# # tree=array2tree(array_gdal,gt)
-
-		####Index with tree
-		# tic=time.time()
-		# _, indexes = tree.query(g)
-		# print("Queried tree in",time.time()-tic)
-		# tic=time.time()
-		# arrind = list(zip(*np.unravel_index(indexes,np.shape(array_gdal))))
-		# dfind=pd.Series(arrind)
-		# grid['ind'] = dfind 
-		# print("Zipped index index in",time.time()-tic)
-		
-		#print(grid["ind"])
-
-		####Index with loop
-		t1=time.time()
-		print("Read",pth[-25:-20],",finding indexes...")
-		ind=[]
-		for row in grid.itertuples():
-			#print(row.geometry.x, row.geometry.y)
-			ind.append(get_coords_at_point(gt, row.X, row.Y))
-
-		grid["ind"]=ind
-		print("Indexed points loop", pth[-25:-20], "Time:",np.round(time.time()-t1,2),"s")
-
-		####Index with apply
-		#loop is 10x faster than apply
-		#t1=time.time()
-		#grid["ind"] = grid.apply(lambda x: get_coords_at_point(gt, x.geometry.x, x.geometry.y), axis=1)
-		#print(grid["ind"])
-		#print("Indexed points", pth, "Time:",time.time()-t1)
-
-	poplist = []
-	for buff in buffs:
-		#Set buffer to index units
-		b=np.ceil(buff/gt[1])
-		t1=time.time()
-		#Run the convolution with the buffer
-		density_array = buffer_convolve2d(array_gdal,b)
-
-		#write_raster(density_array,gt,wkt,gdal_band,nodataval)
-		#Find the value of the convolved array at each point of interest
-		pop = [density_array[x] for x in grid["ind"]]
-		poplist.append(pop)
-		print("Done pop! Buffer:", buff, "Buffer (index):", b, pth[-25:-20], "Time:",np.round(time.time()-t1,2),"s")
-
-	yr = str(20) + re.sub(".*(apg|APG)(\\d{2}).*", "\\2", pth)
-	#print(poplist)
-	popdf = gpd.GeoDataFrame(poplist, index = ["popdens" + str(b) for b in buffs]).T
-	popdf.insert(0, 'FID', grid.FID)
-	popdf.insert(0, 'year', yr)
-
-	#Free up mem
-	gdal_data=None
-
-	return(popdf)
-
-
-############
-
-if __name__ == "__main__":
-
-	## Read in population rasters
-	poprasts = glob.glob('ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif')
-
-	#poprasts=["ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif",
-	#			"ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg09e_f_001_20210512.tif"]
-
-	buffs = [700, 1000, 1500, 2000, 3000, 5000, 10000]
-
-	t1=time.time()
-	print("Reading points rds file...")
-	grid = pyreadr.read_r('AUS_points_5km.rds')
-	grid=list(grid.items())[0][1]
-
-	##Shapefile
-	# grid = gpd.read_file('point06.shp')
-	# g = np.column_stack((grid.geometry.x.to_list(),grid.geometry.y.to_list()))
-	# grid = pd.DataFrame(g,columns=["X","Y"])
-	# grid.insert(0, 'FID', range(1, len(grid) + 1))
-
-
-	#For tree
-	#g = np.column_stack((grid.geometry.x.to_list(),grid.geometry.y.to_list()))
-	#print("Stacked points in",time.time()-tic)
-	
-	print("Done in ", np.round(time.time()-t1,2),"s",np.shape(grid))
-
-	## Get the raster information from the first grid
-	array_gdal, gt,_,_,_ = open_gdal(poprasts[0])
-
-	#Make a KD tree (assuming all tifs will have the same dimensions;
-	# if not, the tree will be re-built on each loop through the raster).
-	#tree=array2tree(array_gdal,gt)
-
-	t1=time.time()
-	print("Finding indexes...for grid")
-	ind=[]
-	for row in grid.itertuples():
-		#print(row.geometry.x, row.geometry.y)
-		ind.append(get_coords_at_point(gt, row.X, row.Y))
-
-	grid["ind"]=ind
-	print("Indexed points loop.")
-
-	#Create the dask delayed object to submit to multiple workers
-	#Or loop through the rasters and run
-	t = []
-	for pth in poprasts:
-		#For dask:
-		t.append(poprast_prep(pth,grid,buffs,gt))
-		#No dask:
-		#dd=poprast_prep(pth,grid,buffs,gt)
-
-	#Run compute with dask
-	print("Finished appending, running dask compute...")
-	tic=time.time()
-	dd=compute(t,scheduler="multiprocessing",num_workers=6)
-	#Combine all the runs
-	t=pd.concat(dd[0])
-	print("Done dask:",np.round(time.time()-t1,2),"s")
-
-	
-
-	#Save the result to a file
-	t.to_csv('pop6.csv',index=False)
+print("Functions available:")
+print([f for f in dir() if f[0] is not '_'])
