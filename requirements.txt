@@ -1,0 +1,13 @@
+numpy
+pandas
+rasterio
+geopandas
+gdal
+rasterstats
+numba
+dask
+scipy
+astropy
+pyreadr
+matplotlib
+swifter
