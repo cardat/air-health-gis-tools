@@ -13,7 +13,7 @@ pyenv local air-health-gis
 
 Second, we will install the required packages into our virtual environment.
 ```
-pip install requirements.yml
+pip install -r requirements.txt
 ```
 
 
