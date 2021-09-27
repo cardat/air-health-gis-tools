@@ -1,5 +1,22 @@
 # Air Health GIS extract tools
 
+## Installation
+
+1. Setup your python environment:
+
+First, we will want to create and activate a Python virtual environment.
+```
+pyenv virtualenv 3.9.0 air-health-gis
+
+pyenv local air-health-gis 
+```
+
+Second, we will install the required packages into our virtual environment.
+```
+pip install requirements.yml
+```
+
+
 ## Points for embarrassing parallelisation
 
  * For each raster (20)
