@@ -29,7 +29,7 @@ The radius of the buffer may intersect a raster cell. In this case the raster ce
 
 Ivan has suggested converting all underlying grids/shapefiles/polygons to a single file format. This could be a good way forward as the routine for for extracting from a raster is pretty good now.
 
-The 5 generic types of GIS extractions are all listed as "extract_lblahblah.py". These will be templates to make a script for each of the layers listed in the xlsx. I think each layer will need to be approached uniquely though, as small things like band names, file-naming conventions, will all be different (bringing us back to the approach sugested by Ivan to homogenise the inputs). So far only, 1 layer is finished in the Examples folder.
+The 5 generic types of GIS extractions are all listed as "extract_<geospatial_feature>.py". These will be templates to make a script for each of the layers listed in the xlsx. I think each layer will need to be approached uniquely though, as small things like band names, file-naming conventions, will all be different (bringing us back to the approach sugested by Ivan to homogenise the inputs). So far only, 1 layer is finished in the Examples folder.
 
 **utils.py** contains all the helper functions, that may need more generalising as each of the 5 extraction methods are implemented.
 
