@@ -1,5 +1,13 @@
 from utils import *
+import argparse
 
+"""Constants and Environment"""
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-f","--file", default = "ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
+ap.add_argument("-g","--grid", default = "./grids/AUS_points_5km.rds", type=Path)
+ap.add_argument("-o","--output", default = "./output", type=Path)
+args = ap.parse_args()
 
 @delayed
 def poprast_prep(pth,grid,buffs,gt0):
@@ -85,7 +93,7 @@ def poprast_prep(pth,grid,buffs,gt0):
 if __name__ == "__main__":
 
 	## Read in population rasters
-	poprasts = glob.glob('ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif')
+	poprasts = glob.glob(args.file)
 
 	#poprasts=["ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif"]#,
 	#			"ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg09e_f_001_20210512.tif"]
@@ -94,7 +102,7 @@ if __name__ == "__main__":
 
 	t1=time.time()
 	print("Reading points rds file...")
-	grid = pyreadr.read_r('AUS_points_5km.rds')
+	grid = pyreadr.read_r(args.grid)
 	grid=list(grid.items())[0][1]
 	#grid=grid.iloc[0:100, :]
 
