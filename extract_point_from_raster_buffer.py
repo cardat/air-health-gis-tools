@@ -1,13 +1,16 @@
 from utils import *
 import argparse
+from pathlib import Path
 
 """Constants and Environment"""
 
 ap = argparse.ArgumentParser()
-ap.add_argument("-f","--file", default = "ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
-ap.add_argument("-g","--grid", default = "./grids/AUS_points_5km.rds", type=Path)
+ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif", type=Path)
+ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
 ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
+
+gdal.UseExceptions()
 
 @delayed
 def poprast_prep(pth,grid,buffs,gt0):
@@ -75,6 +78,7 @@ def poprast_prep(pth,grid,buffs,gt0):
         
 		print("Done pop! Buffer:", buff, "Buffer (index):", b, pth[-25:-20], "Time:",np.round(time.time()-t1,2),"s")
 
+
     #Add additional header
 	yr = str(20) + re.sub(".*(apg|APG)(\\d{2}).*", "\\2", pth)
 	#print(poplist)
@@ -93,7 +97,7 @@ def poprast_prep(pth,grid,buffs,gt0):
 if __name__ == "__main__":
 
 	## Read in population rasters
-	poprasts = glob.glob(args.file)
+	poprasts = glob.glob(str(args.file))
 
 	#poprasts=["ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif"]#,
 	#			"ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg09e_f_001_20210512.tif"]
@@ -102,7 +106,7 @@ if __name__ == "__main__":
 
 	t1=time.time()
 	print("Reading points rds file...")
-	grid = pyreadr.read_r(args.grid)
+	grid = pyreadr.read_r(str(args.grid))
 	grid=list(grid.items())[0][1]
 	#grid=grid.iloc[0:100, :]
 
@@ -119,8 +123,15 @@ if __name__ == "__main__":
 	
 	print("Done in ", np.round(time.time()-t1,2),"s",np.shape(grid))
 
+	print(poprasts[0])
+
 	## Get the raster information from the first grid
+	test = open_gdal(poprasts[0])
+	print("hi ",test)
+
 	array_gdal, gt,_,_,_ = open_gdal(poprasts[0])
+
+	print("hi")
 
 	#Make a KD tree (assuming all tifs will have the same dimensions;
 	# if not, the tree will be re-built on each loop through the raster).
