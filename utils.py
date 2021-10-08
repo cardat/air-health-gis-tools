@@ -117,8 +117,10 @@ def coregRaster(i0,j0,data,region):
 	return(np.nansum(pts)/squares)
 
 def open_gdal(filename):
+	print("Where are you mr seg fault?")
 	#Open a raster file using gdal and set it up
 	gdal_data = gdal.Open(filename)
+	print("hi ", gdal_data)
 	gdal_band = gdal_data.GetRasterBand(1)
 	nodataval = gdal_band.GetNoDataValue()
 	array_gdal = gdal_data.ReadAsArray().astype(np.float)
@@ -126,6 +128,8 @@ def open_gdal(filename):
 	wkt = gdal_data.GetProjection()
 	if np.any(array_gdal == nodataval):
 		array_gdal[array_gdal == nodataval] = np.nan
+
+	del gdal_data
 
 	#Return the raster array and the spatial details about the raster
 	return(array_gdal,gt,wkt,gdal_band,nodataval)
