@@ -207,10 +207,6 @@ def array2tree(array_gdal,gt):
 	print("Made tree from gdal in",time.time()-tic)
 	return(tree)
 
-
-print("Functions available:")
-print([f for f in dir() if f[0] is not '_'])
-
 """Constants and Environment"""
 
 ap = argparse.ArgumentParser()
@@ -374,6 +370,6 @@ if __name__ == "__main__":
 	
 
 	#Save the result to a file
-	outfile=str(args.output) + "extracted_data.csv"
+	outfile=str(args.output) / "extracted_data.csv"
 	t.to_csv(outfile,index=False)
 	print("Finished and saved output to:", outfile)
