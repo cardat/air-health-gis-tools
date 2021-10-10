@@ -6,7 +6,7 @@
 
 First, we will want to create and activate a Python virtual environment.
 ```
-pyenv virtualenv 3.9.0 air-health-gis
+pyenv virtualenv 3.6.9 air-health-gis
 
 pyenv local air-health-gis 
 ```
