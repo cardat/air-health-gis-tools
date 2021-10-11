@@ -131,6 +131,7 @@ def open_gdal(filename):
 	if np.any(array_gdal == nodataval):
 		array_gdal[array_gdal == nodataval] = np.nan
 
+	gdal_data.FlushCache()
 	gdal_data = None
 	del gdal_data
 
@@ -215,7 +216,7 @@ def array2tree(array_gdal,gt):
 ap = argparse.ArgumentParser()
 ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
 ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
-ap.add_argument("-o","--output", default = "./output/", type=Path)
+ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
 
 gdal.UseExceptions()
@@ -316,7 +317,7 @@ if __name__ == "__main__":
 	print("Reading points rds file...")
 	grid = pyreadr.read_r(str(args.grid))
 	grid=list(grid.items())[0][1]
-	#grid=grid.iloc[0:100, :]
+	# grid=grid.iloc[0:100, :]
 
 	##Shapefile
 	#grid = gpd.read_file('AUS_points_1km.shp')
@@ -358,7 +359,7 @@ if __name__ == "__main__":
 		#For dask:
 		t.append(poprast_prep(pth,grid,buffs,gt))
 		#No dask:
-		#dd=poprast_prep(pth,grid,buffs,gt)
+		# dd=poprast_prep(pth,grid,buffs,gt)
 
 	#Run compute with dask
 	print("Finished appending, running dask compute...")
@@ -371,6 +372,7 @@ if __name__ == "__main__":
 	
 
 	#Save the result to a file
-	outfile=str(args.output) + "extracted_data.csv"
+	output_fnm = args.file.parts
+	outfile=str(args.output) + "/" + str(output_fnm[1]) + "_extracted.csv"
 	t.to_csv(outfile,index=False)
 	print("Finished and saved output to:", outfile)
