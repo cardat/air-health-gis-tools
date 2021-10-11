@@ -131,7 +131,10 @@ def open_gdal(filename):
 	if np.any(array_gdal == nodataval):
 		array_gdal[array_gdal == nodataval] = np.nan
 
+	gdal_data = None
 	del gdal_data
+
+
 
 	#Return the raster array and the spatial details about the raster
 	return(array_gdal,gt,wkt,gdal_band,nodataval)
@@ -212,7 +215,7 @@ def array2tree(array_gdal,gt):
 ap = argparse.ArgumentParser()
 ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
 ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
-ap.add_argument("-o","--output", default = "./output", type=Path)
+ap.add_argument("-o","--output", default = "./output/", type=Path)
 args = ap.parse_args()
 
 gdal.UseExceptions()
@@ -280,7 +283,7 @@ def poprast_prep(pth,grid,buffs,gt0):
         
         #Add it to the buffer-list.
 		poplist.append(pop)
-        
+         
 		print("Done pop! Buffer:", buff, "Buffer (index):", b, pth[-25:-20], "Time:",np.round(time.time()-t1,2),"s")
 
 
@@ -328,8 +331,6 @@ if __name__ == "__main__":
 	
 	print("Done in ", np.round(time.time()-t1,2),"s",np.shape(grid))
 
-	print("here's your fucking raster ",poprasts[0])
-
 	## Get the raster information from the first grid
 
 	array_gdal, gt,_,_,_ = open_gdal(poprasts[0])
@@ -370,6 +371,6 @@ if __name__ == "__main__":
 	
 
 	#Save the result to a file
-	outfile=str(args.output) / "extracted_data.csv"
+	outfile=str(args.output) + "extracted_data.csv"
 	t.to_csv(outfile,index=False)
 	print("Finished and saved output to:", outfile)
