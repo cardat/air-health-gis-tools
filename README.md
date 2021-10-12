@@ -16,6 +16,17 @@ Second, we will install the required packages into our virtual environment.
 pip install -r requirements.txt
 ```
 
+## Technical Specs
+
+For development, extractions were tested locally on a macOS machine with the following specs:
+
+- Operating System: macOS Big Sur
+- Model: MacBook Pro 16-inch 2019
+- Processor: 2.3 GHz 8-Core Intel Core i9
+- Memory: 64 GB 2667 MHz DDR4 Ram
+
+The performance figures quoted in this Readme will be measured on a machine with those specs; expect potential decreases in performance with reduced processor and memory power.
+
 
 ## Points for embarrassing parallelisation
 
@@ -80,7 +91,14 @@ for i,row in enumerate(sjer_plots_points.itertuples()):
 
 1380 s for all rasters and all buffers!
 
-Using convolution of the raste with a buffer-kernel combined with the itertuples is the fastest appraoch and scales to at least a 1-km resolution grid-as implemented.
+Using convolution of the raster with a buffer-kernel combined with the itertuples is the fastest appraoch and scales to at least a 1-km resolution grid-as implemented.
+
+### Performance Figures
+
+Using the NSW 1km grid, the script took 444.33 seconds to extract data for all buffers for 14 different 2.5 mb raster layers. 
+
+If we extrapolate this performance out to include all 72 layers, assuming each layer is equally easy to extract, processing all would take over 8 hours.
+
 
 ### Tried and failed
 Using scipy kd tree to build index of the raster points. Then would query the points of interest. Any raster larger than 25,000,000 (5000x5000 array) points takes over 10 minutes to build an index. 
