@@ -1,7 +1,8 @@
 */.DS_Store
 .DS_Store
 
-data/*
+data/layers*
+data/grids/Gibson*.rds
 output/*
 
 # Byte-compiled / optimized / DLL files
