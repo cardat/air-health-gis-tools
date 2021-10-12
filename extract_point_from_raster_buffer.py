@@ -47,7 +47,6 @@ def create_buffer(r, center=None):
 	#print(mask*1)
 	return(mask*1.0)
 
-
 @jit(nopython=True)
 def get_coords_at_point(gt, lon, lat):
 	'''
@@ -89,7 +88,6 @@ def points_in_circle(circle, arr):
 			if (i >= 0 and i < len(arr[:,0])) and (j>=0 and j < len(arr[0,:])):               
 				yield arr[i][j]        
 										  
-
 def coregRaster(i0,j0,data,region):
 	'''
 	Coregisters a point with a buffer region of a raster. 
@@ -179,7 +177,6 @@ def write_raster(new_array,gt,wkt,gdal_band,nodataval,output_filename):
 	print("wrote raster")
 	#Close output raster dataset
 
-
 def array2tree(array_gdal,gt):
 	#Make a scipy KDTree from an array
 
@@ -215,7 +212,7 @@ def array2tree(array_gdal,gt):
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
-ap.add_argument("-g","--grid", default = "./data/NSW_points_1km.rds", type=Path)
+ap.add_argument("-g","--grid", default = "./data/nsw_points_1km_test.rds", type=Path)
 ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
 
