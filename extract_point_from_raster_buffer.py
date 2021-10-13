@@ -1,6 +1,13 @@
 import argparse
 from pathlib import Path
-from osgeo import gdal
+
+"""
+contents of utils.py
+
+This has been pasted here because for some bizarre reason importing from utils.py causes segmentation faults.
+However, if we copy+paste utils.py it works.
+Yes, a fascinating mystery, that some future soul will have to unravel...
+"""
 
 import numpy as np
 import pandas as pd
@@ -20,8 +27,6 @@ import scipy
 #use atropy convolution to deal with nans
 from astropy.convolution import convolve
 import pyreadr
-
-print("Imported modules successfully.")
 
 def buffer_convolve(x,buffer):
 	#Make a panning window/kernel represented by 1/0 circle array
@@ -208,13 +213,15 @@ def array2tree(array_gdal,gt):
 	print("Made tree from gdal in",time.time()-tic)
 	return(tree)
 
-"""Constants and Environment"""
+"""Arguments"""
 
 ap = argparse.ArgumentParser()
-ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
-ap.add_argument("-g","--grid", default = "./data/nsw_points_1km_test.rds", type=Path)
+ap.add_argument("-f","--file", default = "./data/layers/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path,help="One or more raster layers selected for data extraction.")
+ap.add_argument("-g","--grid", default = "./data/grids/testing_points.rds", type=Path, help="Dataframe with FID and X Y locations to extract.")
 ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
+
+"""Constants and Environment"""
 
 gdal.UseExceptions()
 
