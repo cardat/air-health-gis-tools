@@ -3,7 +3,7 @@
 
 data/layers/*/*
 data/grids/Gibson*.rds
-output/*
+output/*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
