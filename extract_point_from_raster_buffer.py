@@ -45,8 +45,8 @@ def buffer_convolve(x,buffer):
 
 
 def buffer_convolve2(x,buffer):
-	# use default uniform circle (Tophat2DKernel) rather than custom mask
-	kernel = Tophat2DKernel(buffer)
+	# use default uniform circle (Tophat2DKernel) rather than custom mask, need nromalization
+	kernel = Tophat2DKernel(buffer) 
 	neighbor_sum = convolve(x, kernel, boundary='fill', fill_value=0,
 		normalize_kernel=False,nan_treatment='fill',preserve_nan=True)
 	#Sum up the number of cells used in the kernel (to find area)
@@ -294,7 +294,7 @@ def poprast_prep(pth,grid,buffs,gt0):
 		b=np.ceil(buff/gt[1])
 
 		#Run the convolution with the buffer
-		density_array = buffer_convolve2(array_gdal,b)
+		density_array = buffer_convolve(array_gdal,b)
 		
         #Write out the buffered raster, if you want.
 		#write_raster(density_array,gt,wkt,gdal_band,nodataval)
