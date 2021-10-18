@@ -18,7 +18,7 @@ import scipy
 #from scipy.signal import convolve2d
 #from scipy.ndimage import convolve
 #use atropy convolution to deal with nans
-from astropy.convolution import convolve
+from astropy.convolution import convolve, Tophat2DKernel
 import pyreadr
 
 print("Imported modules successfully.")
@@ -36,6 +36,8 @@ def buffer_convolve(x,buffer):
 
 	#Return the density (sum/area)
 	return(neighbor_sum/num_neighbor)
+
+
 
 def create_buffer(r, center=None):
 	#r is in index units of the array you want to buffer
@@ -314,6 +316,10 @@ if __name__ == "__main__":
 	grid = pyreadr.read_r(str(args.grid))
 	grid=list(grid.items())[0][1]
 	#grid=grid.iloc[0:100, :]
+	# rename 'x','y' to 'X' and 'Y'
+	if ('x' in list(grid)) & ('y' in list(grid)):
+		grid.rename(columns = {'x':'X', 'y':'Y'}, inplace = True)
+		
 
 	##Shapefile
 	#grid = gpd.read_file('AUS_points_1km.shp')
