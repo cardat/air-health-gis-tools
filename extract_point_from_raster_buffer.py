@@ -1,4 +1,5 @@
 import argparse
+import os
 from pathlib import Path
 from osgeo import gdal
 
@@ -21,6 +22,7 @@ import scipy
 from astropy.convolution import convolve, Tophat2DKernel
 import pyreadr
 
+
 print("Imported modules successfully.")
 
 def buffer_convolve(x,buffer):
@@ -37,6 +39,16 @@ def buffer_convolve(x,buffer):
 	#Return the density (sum/area)
 	return(neighbor_sum/num_neighbor)
 
+
+def buffer_convolve2(x,buffer):
+	# use default uniform circle (Tophat2DKernel) rather than custom mask
+	kernel = Tophat2DKernel(buffer)
+	neighbor_sum = convolve(x, kernel, boundary='fill', fill_value=0,
+		normalize_kernel=False,nan_treatment='fill',preserve_nan=True)
+	#Sum up the number of cells used in the kernel (to find area)
+	num_neighbor = np.count_nonzero(kernel)
+	#Return the density (sum/area)
+	return(neighbor_sum/num_neighbor)
 
 
 def create_buffer(r, center=None):
@@ -212,9 +224,13 @@ def array2tree(array_gdal,gt):
 """Constants and Environment"""
 
 ap = argparse.ArgumentParser()
-ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
-ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
-ap.add_argument("-o","--output", default = "./output", type=Path)
+# ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
+# ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
+# ap.add_argument("-o","--output", default = "./output", type=Path)
+ap.add_argument("-f","--file", default = "../../data/AUS_raster_5km.tif", type=Path)
+ap.add_argument("-g","--grid", default = "../../data/Gibson_Epigenetic_points_100m.rds", type=Path)
+ap.add_argument("-o","--output", default = "../../output", type=Path)
+
 args = ap.parse_args()
 
 gdal.UseExceptions()
@@ -272,7 +288,7 @@ def poprast_prep(pth,grid,buffs,gt0):
 		b=np.ceil(buff/gt[1])
 
 		#Run the convolution with the buffer
-		density_array = buffer_convolve(array_gdal,b)
+		density_array = buffer_convolve2(array_gdal,b)
 		
         #Write out the buffered raster, if you want.
 		#write_raster(density_array,gt,wkt,gdal_band,nodataval)
@@ -288,8 +304,11 @@ def poprast_prep(pth,grid,buffs,gt0):
 
     #Add additional header
 	yr = str(20) + re.sub(".*(apg|APG)(\\d{2}).*", "\\2", pth)
-	#print(poplist)
-	popdf = gpd.GeoDataFrame(poplist, index = ["popdens" + str(b) for b in buffs]).T
+	#print('Length poplist:', len(poplist))
+	print('Generating dataframe...')
+
+	#popdf = gpd.GeoDataFrame(poplist, index = ["popdens" + str(b) for b in buffs]).T # this is causing serious problems!!!
+	popdf = pd.DataFrame(np.asarray(poplist).T, columns = ["popdens" + str(b) for b in buffs])
 	popdf.insert(0, 'FID', grid.FID)
 	popdf.insert(0, 'year', yr)
 
@@ -340,7 +359,7 @@ if __name__ == "__main__":
 
 	array_gdal, gt,_,_,_ = open_gdal(poprasts[0])
 
-	print("hi")
+	#print("hi")
 
 	#Make a KD tree (assuming all tifs will have the same dimensions;
 	# if not, the tree will be re-built on each loop through the raster).
@@ -376,6 +395,8 @@ if __name__ == "__main__":
 	
 
 	#Save the result to a file
-	outfile=str(args.output) / "extracted_data.csv"
+	os.makedirs(str(args.output), exist_ok = True)
+	outfile=os.path.join(str(args.output), "extracted_data.csv")
+	#reconsider to write instead of csv to hdf5
 	t.to_csv(outfile,index=False)
 	print("Finished and saved output to:", outfile)
