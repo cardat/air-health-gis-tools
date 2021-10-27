@@ -233,7 +233,7 @@ ap = argparse.ArgumentParser()
 # ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
 # ap.add_argument("-o","--output", default = "./output", type=Path)
 ap.add_argument("-f","--file", default = "./data/layers/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
-ap.add_argument("-g","--grid", default = "./data/grids/nsw_points_1km_test.rds", type=Path)
+ap.add_argument("-g","--grid", default = "./data/grids/100_testing_points.rds", type=Path)
 ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
 
