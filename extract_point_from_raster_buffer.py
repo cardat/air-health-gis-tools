@@ -214,8 +214,8 @@ def array2tree(array_gdal,gt):
 """Constants and Environment"""
 
 ap = argparse.ArgumentParser()
-ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
-ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
+ap.add_argument("-f","--file", default = "./data/layers/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
+ap.add_argument("-g","--grid", default = "./data/grids/grid_APPMA_NSW_20211018_points.rds", type=Path)
 ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
 
