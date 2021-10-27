@@ -10,6 +10,7 @@ However, if we copy+paste utils.py it works.
 Yes, a fascinating mystery, that some future soul will have to unravel...
 """
 
+import os
 import numpy as np
 import pandas as pd
 import rasterio
@@ -28,6 +29,7 @@ import scipy
 #use atropy convolution to deal with nans
 from astropy.convolution import convolve, Tophat2DKernel
 import pyreadr
+import h5py
 
 def buffer_convolve(x,buffer):
 	#Make a panning window/kernel represented by 1/0 circle array
@@ -141,7 +143,7 @@ def open_gdal(filename):
 	gdal_data = gdal.Open(filename)
 	gdal_band = gdal_data.GetRasterBand(1)
 	nodataval = gdal_band.GetNoDataValue()
-	array_gdal = gdal_data.ReadAsArray().astype(np.float)
+	array_gdal = gdal_data.ReadAsArray().astype(float)
 	gt = gdal_data.GetGeoTransform()
 	wkt = gdal_data.GetProjection()
 	if np.any(array_gdal == nodataval):
@@ -232,9 +234,6 @@ ap = argparse.ArgumentParser()
 # ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
 # ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
 # ap.add_argument("-o","--output", default = "./output", type=Path)
-ap.add_argument("-f","--file", default = "./data/layers/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
-ap.add_argument("-g","--grid", default = "./data/grids/100_testing_points.rds", type=Path)
-ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
 
 """Constants and Environment"""
@@ -334,7 +333,7 @@ if __name__ == "__main__":
 	#poprasts=["ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg06e_f_001_20210512.tif"]#,
 	#			"ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/apg09e_f_001_20210512.tif"]
 
-	buffs = [700, 1000, 1500, 2000, 3000, 5000, 10000]
+	buffs = [700, 5000, 10000]
 
 	t1=time.time()
 	print("Reading points rds file...")
@@ -398,8 +397,10 @@ if __name__ == "__main__":
 	
 
 	#Save the result to a file
-	os.makedirs(str(args.output), exist_ok = True)
-	outfile=os.path.join(str(args.output), "extracted_data.csv")
-	#reconsider to write instead of csv to hdf5
-	t.to_csv(outfile,index=False)
+	output_fnm = args.file.parts
+	grid_fnm = args.grid.parts
+	outfile=str(args.output) + "/" + str(output_fnm[2]) + "_extracted_" + str(os.path.basename(args.grid).split('.')[0]) +".csv"
+	# t.to_hdf(outfile, key='data', mode='w')
+	t.to_csv(outfile, index=False)
+	# pyreadr.write_rds(outfile, t, compress="gzip")
 	print("Finished and saved output to:", outfile)
