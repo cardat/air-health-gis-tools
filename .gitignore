@@ -1,7 +1,9 @@
 */.DS_Store
 .DS_Store
 
-data/*
+data/layers/*/*
+data/grids/Gibson*.rds
+output/*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -133,3 +135,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .Rproj.user
+
+# R stuff
+.RData
+.Rhistory
+data/grids/grid_APPMA_NSW_20211018_points.rds
+data/grids/grid_to_do_APMMA_NSW_20211018_points.rds
