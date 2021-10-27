@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 from osgeo import gdal
 
+import os
 import numpy as np
 import pandas as pd
 import rasterio
@@ -20,6 +21,7 @@ import scipy
 #use atropy convolution to deal with nans
 from astropy.convolution import convolve
 import pyreadr
+import h5py
 
 print("Imported modules successfully.")
 
@@ -374,6 +376,8 @@ if __name__ == "__main__":
 	#Save the result to a file
 	output_fnm = args.file.parts
 	grid_fnm = args.grid.parts
-	outfile=str(args.output) + "/" + str(output_fnm[2]) + "_extracted_" + str(grid_fnm[2]) +".rds"
-	pyreadr.write_rds(outfile, t, compress="gzip")
+	outfile=str(args.output) + "/" + str(output_fnm[2]) + "_extracted_" + str(os.path.basename(args.grid).split('.')[0]) +".csv"
+	# t.to_hdf(outfile, key='data', mode='w')
+	t.to_csv(outfile, index=False)
+	# pyreadr.write_rds(outfile, t, compress="gzip")
 	print("Finished and saved output to:", outfile)
