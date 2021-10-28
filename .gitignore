@@ -1,4 +1,5 @@
 */.DS_Store
+**/*/.DS_Store
 .DS_Store
 
 data/layers*
@@ -139,3 +140,7 @@ dmypy.json
 # R stuff
 .RData
 .Rhistory
+
+
+# editors
+*.sublime*
