@@ -1,12 +1,15 @@
 
 # Nate code
-| raster grid (N points) | Nr extracted points | buffer | time | peak memory |
-| - | - | - | - | - |
-| ~15Mil | 1000 | 2000 | 2.2s | 660 MB |
-| ~15Mil | 1000 | 10000 | 14s | 660 MB |
+| raster grid (N points) | Nr extracted points | buffer | time | peak memory | Notes |
+| - | - | - | - | - | - |
+| ~15Mil | 1,000 | 2,000 | 2.2s | 660 MB | dask delayed | 
+| ~15Mil | 1,000 | 10,000 | 14s | 660 MB | dask delayed |
+| ~15Mil | 100,000 | 10,000 | 29s | 850 MB | dask delayed |
 
 # Sergio code
-| raster grid (N points) | Nr extracted points | buffer | time | peak memory |
-| - | - | - | - | - |
-| ~15Mil | 1000 | 2000 | 40s | 390 MB |
-| ~15Mil | 1000 | 10000 | 40s | 390 MB |
+| raster grid (N points) | Nr extracted points | buffer | time | peak memory | Notes |
+| - | - | - | - | - | - |
+| ~15Mil | 1,000 | 2,000 | 40s | 390 MB | no dask dataframe |
+| ~15Mil | 1,000 | 10,000 | 40s | 390 MB | no dask dataframe |
+| ~15Mil | 1,000 | 10,000 | 18s | 390 MB | dask dataframe multiprocess scheduler |
+| ~15Mil | 100,000 | 10,000 | Xs | X MB | no dask dataframe |
