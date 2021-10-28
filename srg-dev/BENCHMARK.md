@@ -12,4 +12,5 @@
 | ~15Mil | 1,000 | 2,000 | 40s | 390 MB | no dask dataframe |
 | ~15Mil | 1,000 | 10,000 | 40s | 390 MB | no dask dataframe |
 | ~15Mil | 1,000 | 10,000 | 18s | 390 MB | dask dataframe multiprocess scheduler |
-| ~15Mil | 100,000 | 10,000 | Xs | X MB | no dask dataframe |
+| ~15Mil | 1,000 | 10,000 | 6s | 390 MB | dask dataframe multiprocess scheduler, improved extraction function |
+| ~15Mil | 100,000 | 10,000 | TBC s | TBC MB | no dask dataframe |
