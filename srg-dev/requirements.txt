@@ -1,0 +1,7 @@
+geopandas
+rioxarray
+xarray
+dask
+memory_profiler
+dask-labextension
+jupyterlab
