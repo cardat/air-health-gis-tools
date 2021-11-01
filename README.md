@@ -1,9 +1,16 @@
 # Air Health GIS extract tools
 
 ## Table of Contents
+  * [Introduction](#introduction)
   * [Installation](#installation)
   * [Technical Requirements](#technical-requirements)
   * [Old Readme](#old-readme)
+
+## Introduction
+
+This repository contains code related to extracting and wrangling GIS data from a wide variety of sources selected by researchers at the Centre for Air pollution, energy and health Research Data Analysis Technology.
+
+
 
 ## Installation
 
