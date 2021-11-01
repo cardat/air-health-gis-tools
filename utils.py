@@ -103,22 +103,22 @@ def coregRaster(i0,j0,data,region):
 	pts_iterator = points_in_circle((i0,j0,region), data)
 	pts = np.array(list(pts_iterator))
 
-	#Count area that contributed to calc
+	# Count area that contributed to calc
 	squares= np.count_nonzero(~np.isnan(pts))
-	#each square is 1000m x 1000m
-	#each index unit is 1000m
+	# each square is 1000m x 1000m
+	# each index unit is 1000m
 	
-	#Density = total vol / area 
-	#area = no. squares 
+	# Density = total vol / area 
+	# area = no. squares 
 
-	#Question - do you count the entire area (e.g. including 
-	#the ocean) within the buffer or just the valid points.
-	#Does a nan equal a 0 when considering area?
+	# Question - do you count the entire area (e.g. including 
+	# the ocean) within the buffer or just the valid points.
+	# Does a nan equal a 0 when considering area?
 	return(np.nansum(pts)/squares)
 
 def open_gdal(filename):
 	print("Where are you mr seg fault?")
-	#Open a raster file using gdal and set it up
+	# Open a raster file using gdal and set it up
 	gdal_data = gdal.Open(filename)
 	print("hi ", gdal_data)
 	gdal_band = gdal_data.GetRasterBand(1)
@@ -131,7 +131,7 @@ def open_gdal(filename):
 
 	del gdal_data
 
-	#Return the raster array and the spatial details about the raster
+	# Return the raster array and the spatial details about the raster
 	return(array_gdal,gt,wkt,gdal_band,nodataval)
 
 def cartesian_product(*arrays):

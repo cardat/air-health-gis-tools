@@ -7,18 +7,20 @@
 
 ## Installation
 
-1. Setup your python environment:
+1. Setup your python environment with `conda` (if you don't have miniconda/anaconda please download it [here](https://www.anaconda.com/products/individual)):
+
+__NOTE__: make sure you have your "base" conda enviroment updated (`conda update -n base -c defaults conda -y`), and also __pay attention__ to never install packages into the base environment!
 
 First, we will want to create and activate a Python virtual environment.
 ```
-pyenv virtualenv 3.6.9 air-health-gis
-
-pyenv local air-health-gis 
+conda create -n air-health-gis python=3.9
 ```
 
-Second, we will install the required packages into our virtual environment.
+Second, we activate our virtual enviroment and install the required packages.
+
 ```
-pip install -r requirements.txt
+conda activate air-health-gis
+conda install --file conda-requirements.txt -y
 ```
 
 ## Technical Requirements

@@ -4,9 +4,9 @@
 .DS_Store
 **/__MACOSX
 
-data/layers*
+data/layers/*/*
 data/grids/Gibson*.rds
-output/*
+output/*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -142,6 +142,7 @@ dmypy.json
 # R stuff
 .RData
 .Rhistory
+<<<<<<< HEAD
 
 
 # editors
@@ -149,3 +150,5 @@ dmypy.json
 
 # Dask
 **/dask-worker-space/
+data/grids/grid_APPMA_NSW_20211018_points.rds
+data/grids/grid_to_do_APMMA_NSW_20211018_points.rds
