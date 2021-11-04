@@ -11,16 +11,24 @@
 
 __NOTE__: make sure you have your "base" conda enviroment updated (`conda update -n base -c defaults conda -y`), and also __pay attention__ to never install packages into the base environment!
 
-First, we will want to create and activate a Python virtual environment.
+Add or make sure to have the `conda-forge` channel as part of your conda distribution:
+
+```bash
+conda config --append channels conda-forge
 ```
+
+First, we will want to create and activate a Python virtual environment.
+
+```bash
 conda create -n air-health-gis python=3.9
 ```
 
 Second, we activate our virtual enviroment and install the required packages.
 
-```
+```bash
 conda activate air-health-gis
 conda install --file conda-requirements.txt -y
+pip install pip-requirements.txt
 ```
 
 ## Technical Requirements
