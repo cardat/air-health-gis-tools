@@ -145,7 +145,11 @@ def open_gdal(filename):
 	if np.any(array_gdal == nodataval):
 		array_gdal[array_gdal == nodataval] = np.nan
 
+	gdal_data.FlushCache()
+	gdal_data = None
 	del gdal_data
+
+
 
 	#Return the raster array and the spatial details about the raster
 	return(array_gdal,gt,wkt,gdal_band,nodataval)
@@ -224,13 +228,9 @@ def array2tree(array_gdal,gt):
 """Constants and Environment"""
 
 ap = argparse.ArgumentParser()
-# ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
-# ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
-# ap.add_argument("-o","--output", default = "./output", type=Path)
-ap.add_argument("-f","--file", default = "../../data/AUS_raster_5km.tif", type=Path)
-ap.add_argument("-g","--grid", default = "../../data/Gibson_Epigenetic_points_100m.rds", type=Path)
-ap.add_argument("-o","--output", default = "../../output", type=Path)
-
+ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
+ap.add_argument("-g","--grid", default = "./data/NSW_points_1km.rds", type=Path)
+ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
 
 gdal.UseExceptions()
@@ -298,7 +298,7 @@ def poprast_prep(pth,grid,buffs,gt0):
         
         #Add it to the buffer-list.
 		poplist.append(pop)
-        
+         
 		print("Done pop! Buffer:", buff, "Buffer (index):", b, pth[-25:-20], "Time:",np.round(time.time()-t1,2),"s")
 
 
@@ -338,7 +338,6 @@ if __name__ == "__main__":
 	# rename 'x','y' to 'X' and 'Y'
 	if ('x' in list(grid)) & ('y' in list(grid)):
 		grid.rename(columns = {'x':'X', 'y':'Y'}, inplace = True)
-		
 
 	##Shapefile
 	#grid = gpd.read_file('AUS_points_1km.shp')
@@ -352,8 +351,6 @@ if __name__ == "__main__":
 	#print("Stacked points in",time.time()-tic)
 	
 	print("Done in ", np.round(time.time()-t1,2),"s",np.shape(grid))
-
-	print("here's your fucking raster ",poprasts[0])
 
 	## Get the raster information from the first grid
 
@@ -382,7 +379,7 @@ if __name__ == "__main__":
 		#For dask:
 		t.append(poprast_prep(pth,grid,buffs,gt))
 		#No dask:
-		#dd=poprast_prep(pth,grid,buffs,gt)
+		# dd=poprast_prep(pth,grid,buffs,gt)
 
 	#Run compute with dask
 	print("Finished appending, running dask compute...")
@@ -395,8 +392,11 @@ if __name__ == "__main__":
 	
 
 	#Save the result to a file
+
 	os.makedirs(str(args.output), exist_ok = True)
 	outfile=os.path.join(str(args.output), "extracted_data.csv")
 	#reconsider to write instead of csv to hdf5
+	output_fnm = args.file.parts
+	outfile=str(args.output) + "/" + str(output_fnm[1]) + "_extracted.csv"
 	t.to_csv(outfile,index=False)
 	print("Finished and saved output to:", outfile)
