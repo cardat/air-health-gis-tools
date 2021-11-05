@@ -2,6 +2,7 @@ import os
 import logging
 import argparse
 import rioxarray as riox
+import pandas as pd
 
 from math import ceil
 from xarray import DataArray
@@ -26,7 +27,7 @@ def read_raster_check_crs(raster_path: str, crs: CRS) -> DataArray:
     if not os.path.exists(os.path.realpath(raster_path)):
         raise FileNotFoundError(f'File not found: {raster_path}')
 
-    raster = riox.open_rasterio(raster_path, chunks='auto').sel(band=1)
+    raster = riox.open_rasterio(raster_path).sel(band=1)
     if raster.rio.crs is not None:
         assert raster.rio.crs == crs, (
             f"Raster CRS {raster.rio.crs.to_epsg()} not matching raster input"
@@ -74,14 +75,13 @@ def main(data_path: str, data_crs: str, grid_path: str, grid_crs: str,
 
     # calculate resolution in meters and generate kernel
     pix_width, pix_height = calc_cellsize(selected_data)
-    resolution = int(ceil(mean(pix_width, pix_height)))# in meters
+    resolution = int(ceil(mean([pix_width, pix_height])))# in meters
     kernel_radius = max(int(ceil(buffer / resolution)), 1)
 
     kernel = circle_kernel(1, 1, kernel_radius)
 
     # calculate focal statistics
     output_raster = apply(selected_data, kernel, _calc_mean)
-    import pdb; pdb.set_trace()  # breakpoint cbad291a //
 
     # Save raster to file
     output_raster.rio.to_raster(out_path)
@@ -89,6 +89,7 @@ def main(data_path: str, data_crs: str, grid_path: str, grid_crs: str,
 
 
 if __name__ == '__main__':
+    time_start = pd.Timestamp('now')
     mypars = argparse.ArgumentParser(
         description="""
 Process rain daily data for a given shapefile and save the output
@@ -130,7 +131,7 @@ they will be up/downsampled to match the passed raster."
     mypars.add_argument(
         '--buffer',
         help='the size of the buffer to extract the data from, in meters',
-        type=str,
+        type=int,
         required=True
     )
     mypars.add_argument(
@@ -141,3 +142,4 @@ they will be up/downsampled to match the passed raster."
     )
     argss = mypars.parse_args()
     main(**vars(argss))
+    log.info("Total processing duration: %s", pd.Timestamp('now') - time_start)
