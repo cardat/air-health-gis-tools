@@ -106,7 +106,7 @@ they will be up/downsampled to match the passed raster."
     )
     mypars.add_argument(
         '--data-crs',
-        help='the input data CRS, ie the data are expected to be in this CRS',
+        help='EPSG code of the input data CRS, ie the data are expected to be in this CRS',
         type=str,
         required=True
     )
@@ -118,13 +118,13 @@ they will be up/downsampled to match the passed raster."
     )
     mypars.add_argument(
         '--grid-crs',
-        help='the input grid CRS, ie the data are expected to be in this CRS',
+        help='EPSG code the input grid CRS, ie the data are expected to be in this CRS',
         type=str,
         required=True
     )
     mypars.add_argument(
         '--target-crs',
-        help='the CRS of the output data',
+        help='EPSG code the CRS of the output data',
         type=str,
         required=True
     )
