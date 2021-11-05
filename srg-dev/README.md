@@ -12,3 +12,7 @@ Install the dependencies:
 conda activate myenv
 conda install --file requirements.txt -y
 ```
+
+## Using the Python script
+
+TODO
