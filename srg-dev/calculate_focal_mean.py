@@ -22,7 +22,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def read_raster_check_crs(raster_path: str, crs: CRS) -> DataArray:
+def read_raster_check_crs(raster_path: str, crs: CRS, drop_na: False) -> DataArray:
     # read data array and check CRS
     if not os.path.exists(os.path.realpath(raster_path)):
         raise FileNotFoundError(f'File not found: {raster_path}')
@@ -36,6 +36,12 @@ def read_raster_check_crs(raster_path: str, crs: CRS) -> DataArray:
     else:
         log.info("setting raster CRS to passed input CRS")
         raster = raster.rio.write_crs(int(crs))
+
+    # check for NaNs and drop them:
+    if drop_na:
+        nans_selection = (raster == raster.rio.nodata)
+        if nans_selection.any():
+            raster = raster.where(~nans_selection, drop=True)
 
     return raster
 
