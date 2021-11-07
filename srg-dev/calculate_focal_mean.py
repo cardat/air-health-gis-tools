@@ -89,6 +89,13 @@ def main(data_path: str, data_crs: str, grid_path: str, grid_crs: str,
     # calculate focal statistics
     output_raster = apply(selected_data, kernel, _calc_mean)
 
+    # adjust output with scale and offset in case
+    if "scale_factor" in data.attrs.keys() and data.scale_factor != 1:
+        output_raster = output_raster * data.scale_factor
+
+    if "add_offset" in data.attrs.keys() and data.add_offset != 0:
+        output_raster = output_raster + data.add_offset
+
     # Save raster to file
     output_raster.rio.to_raster(out_path)
     pass
