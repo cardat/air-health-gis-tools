@@ -22,7 +22,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def read_raster_check_crs(raster_path: str, crs: CRS, drop_na: False) -> DataArray:
+def read_raster_check_crs(raster_path: str, crs: CRS, drop_na: bool=False) -> DataArray:
     # read data array and check CRS
     if not os.path.exists(os.path.realpath(raster_path)):
         raise FileNotFoundError(f'File not found: {raster_path}')
@@ -66,7 +66,7 @@ def main(data_path: str, data_crs: str, grid_path: str, grid_crs: str,
     data_crs, grid_crs, target_crs = crs_list
 
     # read rasters and check CRS
-    data = read_raster_check_crs(data_path, data_crs)
+    data = read_raster_check_crs(data_path, data_crs, drop_na=True)
     grid = read_raster_check_crs(grid_path, grid_crs)
 
     # reproject to target CRS
