@@ -18,3 +18,7 @@
 | ~15Mil | | 1,000 | 10,000 | 18s | 390 MB | dask dataframe multiprocess scheduler |
 | ~15Mil | | 1,000 | 10,000 | 6s | 390 MB | dask dataframe multiprocess scheduler, improved extraction function |
 | ~15Mil | | 100,000 | 10,000 | TBC s | TBC MB | no dask dataframe |
+
+# ArcGIS Pro
+| raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 10,000 | 81s | 5200 MB | ArcGIS Pro GUI actions added up together
