@@ -18,3 +18,14 @@
 | ~15Mil | | 1,000 | 10,000 | 18s | 390 MB | dask dataframe multiprocess scheduler |
 | ~15Mil | | 1,000 | 10,000 | 6s | 390 MB | dask dataframe multiprocess scheduler, improved extraction function |
 | ~15Mil | | 100,000 | 10,000 | TBC s | TBC MB | no dask dataframe |
+
+
+# Benchmarking running times vs dimension of buffer
+
+Benchmarks using 99Mil grid and `calculate_focal_mean.py` script:
+
+| buffer (km) | running time (HH:MM:SSSS) | Peak Memory (MB) |
+| - | - | - |
+| 1 | 00:02:04.617080 | 4316 MB |
+| 5 | 00:44:56.041497 | 4301 MB |
+| 10 | 02:57:14.253508 | 4616 MB |
