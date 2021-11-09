@@ -1,8 +1,8 @@
 """
-Simple test script for optimising of raster file conversion to reference grid with raster stats extraction for given buffer around each grid point.
-This method makes use of fast convolution with nan-integration (for buffering) and image reprojection using nearest neighbor for coordinate macthing.
+Script for raster file conversion to reference grid with raster stats extraction for given buffer around each grid point.
+This method makes use of fast convolution with nan-integration (for buffering) and image reprojection using nearest neighbor for coordinate matching.
 
-Restrictions: Destionation raster grid and input data grad must be regular grids
+Restrictions: Destination raster grid and input data grid must be regular grids.
 
 
 Notes: 
@@ -17,8 +17,6 @@ To Do:
 - include automatic crs check and transfromation to destination grid crs (in this example both use same crs)
 - test extracted stats
 - save transformation matrix for reprojection once and reuse for each buffer (--> will significantly speed up computation)
-- optimsation possible via processing multiple buffers in parallel and not exporting/importing all intermediate step rasters \
-(currently incl here for testing)
 
 
 Author: Sebastian Haan, Nathanial Butterworth
