@@ -1,0 +1,23 @@
+## Installation
+
+Install the enviroment with conda (and name it as you  with, e.g. `myenv`):
+
+```bash
+conda create -n myenv python=3.9 -y
+```
+
+Install the dependencies:
+
+```bash
+conda activate myenv
+conda install --file requirements.txt -y
+```
+
+## Using the Python script
+
+TODO
+
+
+```
+python calculate_focal_mean.py --data-path "test-data/arcgis-rasters/apg18e_1_0_0_20210512.tif" --data-crs "3577" --grid-path "test-data/arcgis-rasters/grid_to_do_APMMA_NSW_20211018.tif" --grid-crs "9473" --target-crs "3577" --buffer 400 --out-path "400_test.tif"
+```

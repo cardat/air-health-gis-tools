@@ -1,9 +1,12 @@
+# Mac bullshit
 */.DS_Store
+**/.DS_Store
 .DS_Store
+**/__MACOSX
 
-data/layers*
+data/layers/*/*
 data/grids/Gibson*.rds
-output/*
+output/*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -139,3 +142,17 @@ dmypy.json
 # R stuff
 .RData
 .Rhistory
+<<<<<<< HEAD
+
+
+# editors
+*.sublime*
+
+# Dask
+**/dask-worker-space/
+
+# Data to ignore
+data/grids/grid_APPMA_NSW_20211018_points.rds
+data/grids/grid_to_do_APMMA_NSW_20211018_points.rds
+**/apg18e_APPMA_NSW.tif
+2018_popdens/*
