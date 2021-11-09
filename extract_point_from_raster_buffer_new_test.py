@@ -1,10 +1,10 @@
 """
 Simple test script for optimising of raster file conversion to reference grid with raster stats extraction for given buffer around each grid point.
-This method makes use of fast convolution (for buffering) and image reprojection using nearest neighbor for coordinate macthing.
+This method makes use of fast convolution (for buffering) and image reprojection using nearest neighbor for coordinate matching.
 
-Note: resampleing with nearest neighbor is fastest method but on can also use linear interpolation
+Note: resampleing with nearest neighbor is fastest method but on can also use linear interpolation.
 
-Restrictions: Destionation raster grid and input data grad muts be regular grids
+Restrictions: Destination raster grid and input data grid must be regular grids.
 
 To Do:
 
