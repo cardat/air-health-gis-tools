@@ -31,4 +31,4 @@
 ## QGIS
 | raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
 | - | - | - | - | - | - | - |
-| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 10,000 | Crash | 5200 MB | QGIS GUI actions added up together |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 10,000 | Crash | NA | QGIS GUI actions added up together |
