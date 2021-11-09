@@ -1,4 +1,5 @@
 import os
+import dask
 import logging
 import argparse
 import rioxarray as riox
@@ -22,12 +23,17 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def read_raster_check_crs(raster_path: str, crs: CRS, drop_na: bool=False) -> DataArray:
+def read_raster_check_crs(raster_path: str, crs: CRS, drop_na: bool=False,
+    dask: bool=False) -> DataArray:
     # read data array and check CRS
     if not os.path.exists(os.path.realpath(raster_path)):
         raise FileNotFoundError(f'File not found: {raster_path}')
 
-    raster = riox.open_rasterio(raster_path).sel(band=1)
+    raster = (
+        riox.open_rasterio(raster_path, chunks='auto') if dask else
+        riox.open_rasterio(raster_path)
+    ).sel(band=1)
+
     if raster.rio.crs is not None:
         assert raster.rio.crs == crs, (
             f"Raster CRS {raster.rio.crs.to_epsg()} not matching raster input"
@@ -47,7 +53,8 @@ def read_raster_check_crs(raster_path: str, crs: CRS, drop_na: bool=False) -> Da
 
 
 def main(data_path: str, data_crs: str, grid_path: str, grid_crs: str,
-    target_crs: str, buffer: int, out_path: str):
+    target_crs: str, buffer: int, out_path: str, dask: bool=False,
+    write_out: bool=True):
     # check output path folder if exists
     out_folder = os.path.dirname(os.path.realpath(out_path))
     if not os.path.exists(out_folder):
@@ -64,10 +71,11 @@ def main(data_path: str, data_crs: str, grid_path: str, grid_crs: str,
             log.error("Could not convert CRS: %s", crs)
             raise e
     data_crs, grid_crs, target_crs = crs_list
+    del crs_list
 
     # read rasters and check CRS
-    data = read_raster_check_crs(data_path, data_crs, drop_na=True)
-    grid = read_raster_check_crs(grid_path, grid_crs)
+    data = read_raster_check_crs(data_path, data_crs, drop_na=True, dask=dask)
+    grid = read_raster_check_crs(grid_path, grid_crs, dask=dask)
 
     # reproject to target CRS
     # NOTE/TODO:for the grid data potentially we need the x and y arrays
@@ -75,6 +83,8 @@ def main(data_path: str, data_crs: str, grid_path: str, grid_crs: str,
     for r in [data, grid]:
         if r.rio.crs != target_crs:
             r = r.rio.reproject(target_crs)
+    # if data.rio.crs != target_crs:
+    #     data = data.rio.reproject(target_crs)
 
     # extract select data at the grid
     selected_data = data.sel(x=grid.x, y=grid.y, method="nearest")
@@ -88,7 +98,6 @@ def main(data_path: str, data_crs: str, grid_path: str, grid_crs: str,
 
     # calculate focal statistics
     output_raster = apply(selected_data, kernel, _calc_mean)
-
     # adjust output with scale and offset in case
     if "scale_factor" in data.attrs.keys() and data.scale_factor != 1:
         output_raster = output_raster * data.scale_factor
@@ -97,7 +106,8 @@ def main(data_path: str, data_crs: str, grid_path: str, grid_crs: str,
         output_raster = output_raster + data.add_offset
 
     # Save raster to file
-    output_raster.rio.to_raster(out_path)
+    if write_out:
+        output_raster.rio.to_raster(out_path)
     pass
 
 
@@ -105,9 +115,8 @@ if __name__ == '__main__':
     time_start = pd.Timestamp('now')
     mypars = argparse.ArgumentParser(
         description="""
-Process rain daily data for a given shapefile and save the output
-to a location. NaNs in the data will be interpolated spatially and
-they will be up/downsampled to match the passed raster."
+Calculate the mean focal statistic for a data raster and a grid raster, given a
+buffer/kernel radius
         """,
         # formatter_class=argparse.RawTextHelpFormatter
     )
@@ -153,6 +162,23 @@ they will be up/downsampled to match the passed raster."
         type=str,
         required=True
     )
+    mypars.add_argument(
+        '--dask',
+        help='run computations using Dask',
+        action='store_true',
+        default=False,
+    )
+    mypars.add_argument(
+        '--no-write-output',
+        help='disable writing the output raster to a file',
+        dest='write_out',
+        default=True,
+        action='store_false',
+    )
     argss = mypars.parse_args()
+
+    if argss.dask:
+        dask.config.set(scheduler='processes')
+
     main(**vars(argss))
     log.info("Total processing duration: %s", pd.Timestamp('now') - time_start)
