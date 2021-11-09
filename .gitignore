@@ -142,8 +142,6 @@ dmypy.json
 # R stuff
 .RData
 .Rhistory
-<<<<<<< HEAD
-
 
 # editors
 *.sublime*
