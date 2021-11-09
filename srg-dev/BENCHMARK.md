@@ -19,7 +19,7 @@
 | ~15Mil | | 1,000 | 10,000 m | 18 s | 390 MB | dask dataframe multiprocess scheduler |
 | ~15Mil | | 1,000 | 10,000 m | 6 s | 390 MB | dask dataframe multiprocess scheduler, improved extraction function |
 | ~15Mil | | 100,000 | 10,000 m | 473 s | 2490 MB | no dask dataframe |
-| ~15Mil | | 100,000 | 10,000 m | TBC s | TBC MB | no dask dataframe |
+| ~15Mil | | 100,000 | 10,000 m | 59 s | 1300 MB | no writing output raster |
 
 
 # Dedicated GIS Software
