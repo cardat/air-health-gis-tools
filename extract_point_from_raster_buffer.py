@@ -56,7 +56,6 @@ def buffer_convolve2(x,buffer):
 	#Return the density (sum/area)
 	return(neighbor_sum/num_neighbor)
 
-
 def create_buffer(r, center=None):
     #r is in index units of the array you want to buffer
     #Create a circular buffer r units in radius
@@ -397,6 +396,10 @@ if __name__ == "__main__":
 
 
 	#Save the result to a file
+
+	os.makedirs(str(args.output), exist_ok = True)
+	outfile=os.path.join(str(args.output), "extracted_data.csv")
+	#reconsider to write instead of csv to hdf5
 	output_fnm = args.file.parts
 	grid_fnm = args.grid.parts
 	outfile=str(args.output) + "/" + str(output_fnm[2]) + "_extracted_" + str(os.path.basename(args.grid).split('.')[0]) +".csv"
