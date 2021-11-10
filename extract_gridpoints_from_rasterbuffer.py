@@ -1,22 +1,29 @@
 """
-Script for raster file conversion to reference grid with raster stats extraction for given buffer around each grid point.
-This method makes use of fast convolution with nan-integration (for buffering) and image reprojection using nearest neighbor for coordinate matching.
+Script for extracting buffered raster stats averages from input raster at positions of destination grid points.
 
-Restrictions: Destination raster grid and input data grid must be regular grids.
+To optimise the buffer extraction this method makes use 1) of fast convolution incl, taking into accounts nans,
+and 2) taking advantage of the fact that destination points are distributed in regular grid, 
+so we can take advantage of fitting a grid transformation matrix between original raster and destintion raster
+instead of using much slower triangulated interpolation for each point. 
+
+Arguments:
+-f or --file: path+filename of input raster (buffered stats exatracted from this)
+-g or --grid: path+filename of destination grid raster
+-o or --output: output pathname
 
 
 Notes: 
-- buffers ar currenmtly hardcoded at buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
+- buffers ar currently hardcoded at buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
 (Change in main function if needed)
 - resampling with nearest neighbor is fastest method but on can also use linear interpolation 
 (for change replace in code  resampling=Resampling.nearest with other method)
 
 
-To Do:
+Possible improvements:
 
-- include automatic crs check and transfromation to destination grid crs (in this example both use same crs)
-- test extracted stats
-- save transformation matrix for reprojection once and reuse for each buffer (--> will significantly speed up computation)
+- include automatic crs check and transfromation to destination grid crs (now taken into account by fitting transfromation with rasterio)
+- automated test f extracted stats for some test points
+- save transformation matrix for reprojection once and reuse for each buffer (--> can speed up computation)
 
 
 Author: Sebastian Haan, Nathanial Butterworth
@@ -28,12 +35,8 @@ import os
 from pathlib import Path
 import numpy as np
 import rasterio
-import re
-import glob
 import time
-import scipy
 from astropy.convolution import convolve, Tophat2DKernel
-#import pyreadr
 from rasterio.warp import calculate_default_transform, reproject, Resampling
 
 def buffer_convolve(x,buffer):
@@ -73,8 +76,7 @@ def create_buffer(r, center=None):
 	return(mask*1.0)
 
 
-#Arguments 
-
+## Arguments 
 ap = argparse.ArgumentParser()
 # ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
 # ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
@@ -104,11 +106,6 @@ if __name__ == "__main__":
 	outpath = str(args.output)
 	os.makedirs(outpath, exist_ok = True)
 
-
-
-	# Simple manual test, incl proper i/o name from CML arguments (TBD) 
-
-	#buff = 10000
 
 	t0=time.time()
 	print("Reading in files...")
@@ -188,7 +185,7 @@ if __name__ == "__main__":
 		t4=time.time()
 		print("Coordinate Conversion time: ", np.round(t4-t3,2))
 
-		# Output image name:
+		# Definbe output image name:
 		fname_final_out = os.path.join(outpath, args.file.stem + '_buffer-' + str(buff) + 'm.tif')
 
 		# mask image
@@ -204,7 +201,6 @@ if __name__ == "__main__":
 		dest_file.close()
 
 		t5=time.time()
-
 
 		print(f"Summary Time [seconds] for buffer {buff}m")
 		print("------------------------------------------")
