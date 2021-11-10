@@ -6,8 +6,6 @@ and 2) taking advantage of the fact that destination points are distributed in r
 so we can take advantage of fitting a grid transformation matrix between original raster and destination raster
 instead of using much slower triangulated interpolation for each point. 
 
-See also for improved script with more methods: extract_gridpoints_from_rasterbuffer_v2.py
-
 Arguments:
 -f or --file: path+filename of input raster (buffered stats exatracted from this)
 -g or --grid: path+filename of destination grid raster
@@ -18,13 +16,17 @@ python3 -f INPUTFILENAME -g DESTINATIONFILENAME -o OUTPATHNAME extract_gridpoint
 
 
 Notes: 
-- buffers smaller than input raster resolution are not buffered, only reprojected to destination grid coordinates 
-(to disable this function set buffer_min = 0)
+- There are two ways to do the buffer extraction:
+	- Method 1: 1st step convolution for each buffer, 2nd step projection 
+	- Method 2::  1st step projection, 2nd step convolution for each buffer (typically slower if convolution at higher res arster)
+	The final method is automatically chosen by code based on:
+		a)  If buffer size is larger/smaller than raster resolution (Method1/Method2)
+		b)  If raster resolution larger/smaller than grid resolution (Method2/Method1)
+	- or user can force the fast compute option with first method (convolution first) setting fast_compute = True (in main function)
 - buffers are currently hard-coded at buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
 (Change in main function if needed)
 - resampling with nearest neighbor is fastest method but on can also use linear interpolation 
 To change set parameter resampling_option to one of the following (default Resampling.bilinear):
-
 	Resampling.nearest, 
 	Resampling.bilinear,
 	Resampling.cubic,
@@ -116,9 +118,9 @@ args = ap.parse_args()
 
 if __name__ == "__main__":
 
-	buffers =[700, 1000, 1500, 2000, 3000, 5000, 10000]
+	buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
 
-	resampling_option = Resampling.bilinear
+	fast_compute = False
 	"""
 	Resampling.nearest, 
 	Resampling.bilinear,
@@ -165,20 +167,58 @@ if __name__ == "__main__":
 	data_transform = datafile.transform
 	datafile.close()
 
-	# Temp files for convolution and reprojection
+	# Define temp files for convolution and reprojection
+	fname_warp_temp0 = os.path.join(outpath,'data_warp_temp0.tif')
 	fname_conv_temp = os.path.join(outpath,'data_conv_temp.tif')
 	fname_warp_temp = os.path.join(outpath,'data_warp_temp.tif')
 
 	buffer_min = max([data_xres, data_yres])
 	print('buffer_min: ', buffer_min)
 
+	if (data_xres > grid_xres) & (min(buffers) < 2*buffer_min) & (~fast_compute):
+		# Generate first a reprojected array
+		resampling_option = Resampling.bilinear
+		t1_warp = time.time()
+		print(f"Coordinate conversion and resampling ...")
+		with rasterio.open(fname_raster) as src:
+			kwargs = src.meta.copy()
+			kwargs.update({'crs': grid_crs,'transform': grid_transform, 'width': grid_width,'height': grid_height})
+
+			with rasterio.open(fname_warp_temp0, 'w', **kwargs) as dst:
+				reproject(source=rasterio.band(src, 1), destination=rasterio.band(dst, 1),
+					src_transform=src.transform,
+					src_crs=src.crs,
+					dst_transform=grid_transform,
+					dst_crs=grid_crs,
+					dst_width=grid_width,
+					dst_height=grid_height, 
+					dst_nodata=src.nodata,
+					src_nodata=src.nodata,
+					resampling=resampling_option)
+		src.close()
+		dst.close()
+
+		datafile_proj = rasterio.open(fname_warp_temp0)
+		data_proj_nodata = datafile_proj.nodata
+		data_proj = datafile_proj.read()
+		data_proj = data_proj[0]
+		data_proj[data_proj == data_proj_nodata] = np.nan
+		data_proj_xres, data_proj_yres = datafile_proj.res
+		data_proj_height = datafile_proj.height
+		data_proj_width = datafile_proj.width
+		data_proj_crs = datafile_proj.crs
+		data_proj_transform = datafile_proj.transform
+		datafile_proj.close()
+		t2_warp = time.time()
+		print("Reprojection time: ", np.round(t2_warp-t1_warp,2))
+
 
 	for buff in buffers:
-
 		# Define output image name:
 		fname_final_out = os.path.join(outpath, args.file.stem + '_buffer-' + str(buff) + 'm.tif')
-
-		if (buff > buffer_min):
+		if (data_xres <= grid_xres) | (buff >= 2 * buffer_min) | fast_compute:
+			# Method 1 (Convolution, then reprojection):
+			resampling_option = Resampling.bilinear
 			# only convolve is if buffer is large than raster resolution
 			b=np.ceil(buff/data_xres)
 			t1=time.time()
@@ -246,33 +286,44 @@ if __name__ == "__main__":
 			if os.path.exists(fname_warp_temp):
 				os.remove(fname_warp_temp)
 
+
+			print(f"Summary Time [seconds] for buffer {buff}m")
+			print("------------------------------------------")
+			#print("Reading Files: ", np.round(t1-t0,2))
+			print("Convolution and export: ", np.round(t3-t1,2))
+			#print("Export Convolved: ", np.round(t3-t2,2))
+			print("Coordinate projection: ", np.round(t4-t3,2))
+			print("Masking and final Export: ", np.round(t5-t4,2))
+			print("------------------------------------------")
+
 		else:
-			# if buffer is smaller than raster resolution, then only apply warp transform from original raster
-			t1 = t2 = t3 = time.time()
-			print(f"Processing buffer {buff} meters w/o convolution ...")
-			with rasterio.open(fname_raster) as src:
-				kwargs = src.meta.copy()
-				kwargs.update({'crs': grid_crs,'transform': grid_transform, 'width': grid_width,'height': grid_height})
+			# Method 2 (Convolution after reprojection, typically slower):
+			t2 = time.time()
+			print(f"Convolving with buffer {buff} meters ...")
+			# only convolve is if buffer is large than raster resolution
+			b=np.ceil(buff/data_proj_xres)
+			t3=time.time()
+			density_array = buffer_convolve(data_proj,b)
+			#print("Convolution time: ", np.round(t2-t1,2))
+			print("saving convolved array...")
 
-				with rasterio.open(fname_warp_temp, 'w', **kwargs) as dst:
-					reproject(source=rasterio.band(src, 1), destination=rasterio.band(dst, 1),
-						src_transform=src.transform,
-						src_crs=src.crs,
-						dst_transform=grid_transform,
-						dst_crs=grid_crs,
-						dst_width=grid_width,
-						dst_height=grid_height, 
-						dst_nodata=grid_nodata,
-						src_nodata=src.nodata,
-						resampling=resampling_option)
-			src.close()
-			dst.close()
-
+			with rasterio.open(fname_conv_temp,
+				'w',
+				driver='GTiff',
+				height=data_proj_height,
+				width=data_proj_width,
+				count=1,
+				dtype=data_dtype,
+				crs=data_proj_crs,
+				nodata = grid_nodata,
+				transform=data_proj_transform,) as dest_file:
+				dest_file.write(density_array, 1)
+			dest_file.close()
+			
 			t4=time.time()
-			print("Coordinate Conversion time: ", np.round(t4-t3,2))
 
 			# mask image
-			with rasterio.open(fname_warp_temp) as src:
+			with rasterio.open(fname_conv_temp) as src:
 				data_new = src.read()[0]
 				#nodata = -3.4e38
 				data_new[grid == grid_nodata] = grid_nodata
@@ -287,19 +338,19 @@ if __name__ == "__main__":
 
 			t5=time.time()
 
-			# Deleting temp file:
-			if os.path.exists(fname_warp_temp):
-				os.remove(fname_warp_temp)
+			# Deleting temp files:
+			if os.path.exists(fname_conv_temp):
+				os.remove(fname_conv_temp)
 
-	
-		print(f"Summary Time [seconds] for buffer {buff}m")
-		print("------------------------------------------")
-		#print("Reading Files: ", np.round(t1-t0,2))
-		print("Convolution and export: ", np.round(t3-t1,2))
-		#print("Export Convolved: ", np.round(t3-t2,2))
-		print("Coordinate projection: ", np.round(t4-t3,2))
-		print("Masking and final Export: ", np.round(t5-t4,2))
-		print("------------------------------------------")
+			print(f"Summary Time [seconds] for buffer {buff}m")
+			print("------------------------------------------")
+			#print("Reading Files: ", np.round(t1-t0,2))
+			#print("Coordinate projection: ", np.round(t2-t1,2))
+			#print("Export Convolved: ", np.round(t3-t2,2))
+			print("Convolution and export: ", np.round(t4-t3,2))
+			print("Masking and final Export: ", np.round(t5-t4,2))
+			print("------------------------------------------")
 
-
+	if os.path.exists(fname_warp_temp0):
+		os.remove(fname_warp_temp0)
 	print("TOTAL TIME: ", np.round(t5-t0,2))
