@@ -13,6 +13,8 @@ Arguments:
 
 
 Notes: 
+- buffers smaller than input raster resolution are not buffered, only reprojected to destintaion grid coordinates 
+(to disable this function set buffer_min = 0)
 - buffers ar currently hardcoded at buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
 (Change in main function if needed)
 - resampling with nearest neighbor is fastest method but on can also use linear interpolation 
@@ -21,8 +23,8 @@ Notes:
 
 Possible improvements:
 
-- include automatic crs check and transfromation to destination grid crs (now taken into account by fitting transfromation with rasterio)
-- automated test f extracted stats for some test points
+- include automatic crs check and transfromation to destination grid crs (now taken into account by fitting transformation with rasterio)
+- automated test of extracted stats for some test points
 - save transformation matrix for reprojection once and reuse for each buffer (--> can speed up computation)
 
 
@@ -81,8 +83,8 @@ ap = argparse.ArgumentParser()
 # ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
 # ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
 # ap.add_argument("-o","--output", default = "./output", type=Path)
-ap.add_argument("-f","--file", default = "./data/grid_to_do_APMMA_NSW_20211018.tif", type=Path)
-ap.add_argument("-g","--grid", default = "./data/apg18e_1_0_0_20210512_crs3577.tif", type=Path)
+ap.add_argument("-f","--file", default = "./data/apg18e_1_0_0_20210512_crs3577.tif", type=Path)
+ap.add_argument("-g","--grid", default = "./data/grid_to_do_APMMA_NSW_20211018.tif", type=Path)
 ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
 
@@ -109,7 +111,7 @@ if __name__ == "__main__":
 
 	t0=time.time()
 	print("Reading in files...")
-	gridfile = rasterio.open('data/grid_to_do_APMMA_NSW_20211018.tif')
+	gridfile = rasterio.open(fname_grid)
 	grid_transform = gridfile.transform
 	grid_crs=gridfile.crs
 	grid_width=gridfile.width
@@ -120,7 +122,7 @@ if __name__ == "__main__":
 	grid_xres, grid_yres = gridfile.res
 	gridfile.close()
 
-	datafile = rasterio.open('data/apg18e_1_0_0_20210512_crs3577.tif')
+	datafile = rasterio.open(fname_raster)
 	data_nodata = datafile.nodata
 	data = datafile.read()
 	data = data[0]
@@ -137,71 +139,131 @@ if __name__ == "__main__":
 	fname_conv_temp = os.path.join(outpath,'data_conv_temp.tif')
 	fname_warp_temp = os.path.join(outpath,'data_warp_temp.tif')
 
+	buffer_min = max([data_xres, data_yres])
+	print('buffer_min: ', buffer_min)
+
 
 	for buff in buffers:
-		b=np.ceil(buff/data_xres)
-		t1=time.time()
-		print(f"Processing with buffer {buff} meters ...")
-		density_array = buffer_convolve(data,b)
-		t2=time.time()
-		#print("Convolution time: ", np.round(t2-t1,2))
-		print("saving convolved array...")
 
-		with rasterio.open(fname_conv_temp,
-			'w',
-			driver='GTiff',
-			height=data_height,
-			width=data_width,
-			count=1,
-			dtype=data_dtype,
-			crs=data_crs,
-			nodata = grid_nodata,
-			transform=data_transform,) as dest_file:
-			dest_file.write(density_array, 1)
-		dest_file.close()
-		
-		t3=time.time()
-
-		print("Converting to grid coordinates...")
-
-		with rasterio.open(fname_conv_temp) as src:
-			kwargs = src.meta.copy()
-			kwargs.update({'crs': grid_crs,'transform': grid_transform, 'width': grid_width,'height': grid_height})
-
-			with rasterio.open(fname_warp_temp, 'w', **kwargs) as dst:
-				reproject(source=rasterio.band(src, 1), destination=rasterio.band(dst, 1),
-					src_transform=src.transform,
-					src_crs=src.crs,
-					dst_transform=grid_transform,
-					dst_crs=grid_crs,
-					dst_width=grid_width,
-					dst_height=grid_height, 
-					dst_nodata=grid_nodata,
-					src_nodata=src.nodata,
-					resampling=Resampling.nearest)
-		src.close()
-		dst.close()
-
-		t4=time.time()
-		print("Coordinate Conversion time: ", np.round(t4-t3,2))
-
-		# Definbe output image name:
+		# Define output image name:
 		fname_final_out = os.path.join(outpath, args.file.stem + '_buffer-' + str(buff) + 'm.tif')
 
-		# mask image
-		with rasterio.open(fname_warp_temp) as src:
-			data_new = src.read()[0]
-			data_new[grid == grid_nodata] = grid_nodata
-			#data[data < grid_nodata] = grid_nodata
-			#data[~np.isfinite(data)] = grid_nodata
-			kwargs = src.meta.copy()
-			with rasterio.open(fname_final_out,'w', **kwargs) as dest_file:
-				dest_file.write(data_new, 1)
-		src.close()
-		dest_file.close()
+		if (buff > buffer_min):
+			# only convolve is if buffer is large than raster resolution
+			b=np.ceil(buff/data_xres)
+			t1=time.time()
+			print(f"Processing with buffer {buff} meters ...")
+			density_array = buffer_convolve(data,b)
+			t2=time.time()
+			#print("Convolution time: ", np.round(t2-t1,2))
+			print("saving convolved array...")
 
-		t5=time.time()
+			with rasterio.open(fname_conv_temp,
+				'w',
+				driver='GTiff',
+				height=data_height,
+				width=data_width,
+				count=1,
+				dtype=data_dtype,
+				crs=data_crs,
+				nodata = grid_nodata,
+				transform=data_transform,) as dest_file:
+				dest_file.write(density_array, 1)
+			dest_file.close()
+			
+			t3=time.time()
 
+			print("Converting to grid coordinates...")
+
+			with rasterio.open(fname_conv_temp) as src:
+				kwargs = src.meta.copy()
+				kwargs.update({'crs': grid_crs,'transform': grid_transform, 'width': grid_width,'height': grid_height})
+
+				with rasterio.open(fname_warp_temp, 'w', **kwargs) as dst:
+					reproject(source=rasterio.band(src, 1), destination=rasterio.band(dst, 1),
+						src_transform=src.transform,
+						src_crs=src.crs,
+						dst_transform=grid_transform,
+						dst_crs=grid_crs,
+						dst_width=grid_width,
+						dst_height=grid_height, 
+						dst_nodata=grid_nodata,
+						src_nodata=src.nodata,
+						resampling=Resampling.nearest)
+			src.close()
+			dst.close()
+
+			t4=time.time()
+			print("Coordinate Conversion time: ", np.round(t4-t3,2))
+
+			# mask image
+			with rasterio.open(fname_warp_temp) as src:
+				data_new = src.read()[0]
+				data_new[grid == grid_nodata] = grid_nodata
+				#data[data < grid_nodata] = grid_nodata
+				#data[~np.isfinite(data)] = grid_nodata
+				kwargs = src.meta.copy()
+				with rasterio.open(fname_final_out,'w', **kwargs) as dest_file:
+					dest_file.write(data_new, 1)
+			src.close()
+			dest_file.close()
+
+			t5=time.time()
+
+			# Deleting temp files:
+			if os.path.exists(fname_conv_temp):
+				os.remove(fname_conv_temp)
+			if os.path.exists(fname_warp_temp):
+				os.remove(fname_warp_temp)
+
+		else:
+			# if buffer is smaller than raster resolution, then only apply warp transform from original raster
+			t1 = t2 = t3 = time.time()
+			print(f"Processing buffer {buff} meters w/o convolution ...")
+			with rasterio.open(fname_raster) as src:
+				kwargs = src.meta.copy()
+				kwargs.update({'crs': grid_crs,'transform': grid_transform, 'width': grid_width,'height': grid_height})
+
+				with rasterio.open(fname_warp_temp, 'w', **kwargs) as dst:
+					reproject(source=rasterio.band(src, 1), destination=rasterio.band(dst, 1),
+						src_transform=src.transform,
+						src_crs=src.crs,
+						dst_transform=grid_transform,
+						dst_crs=grid_crs,
+						dst_width=grid_width,
+						dst_height=grid_height, 
+						dst_nodata=grid_nodata,
+						src_nodata=src.nodata,
+						resampling=Resampling.nearest)
+			src.close()
+			dst.close()
+
+			t4=time.time()
+			print("Coordinate Conversion time: ", np.round(t4-t3,2))
+
+			# mask image
+			with rasterio.open(fname_warp_temp) as src:
+				data_new = src.read()[0]
+				data_new[grid == grid_nodata] = grid_nodata
+				#data_new[np.round(grid,1) == np.round(grid_nodata,1)] = grid_nodata
+				#data_new[np.round(data_new,1) == np.round(grid_nodata,1)] = grid_nodata
+				#data_new[np.round(data_new,1) == np.round(grid_nodata,1)] = grid_nodata
+				#data[data < grid_nodata] = grid_nodata
+				#data[~np.isfinite(data)] = grid_nodata
+				kwargs = src.meta.copy()
+				kwargs.update({'src_nodata': grid_nodata,'dst_nodata': grid_nodata})
+				with rasterio.open(fname_final_out,'w', **kwargs) as dest_file:
+					dest_file.write(data_new, 1)
+			src.close()
+			dest_file.close()
+
+			t5=time.time()
+
+			# Deleting temp file:
+			if os.path.exists(fname_warp_temp):
+				os.remove(fname_warp_temp)
+
+	
 		print(f"Summary Time [seconds] for buffer {buff}m")
 		print("------------------------------------------")
 		#print("Reading Files: ", np.round(t1-t0,2))
@@ -211,10 +273,5 @@ if __name__ == "__main__":
 		print("Masking and final Export: ", np.round(t5-t4,2))
 		print("------------------------------------------")
 
-		# Deleting temp files:
-		if os.path.exists(fname_conv_temp):
-			os.remove(fname_conv_temp)
-		if os.path.exists(fname_warp_temp):
-			os.remove(fname_warp_temp)
 
 	print("TOTAL TIME: ", np.round(t5-t0,2))
