@@ -26,11 +26,13 @@ Benchmarks using `benchmark with Nate code.ipynb`, `benchmark with Nate code - D
 
 Benchmarks using 99Mil grid and `calculate_focal_mean.py` script:
 
-| raster grid (N points) | Raster file | Nr extracted points | buffer (km) | running time (HH:MM:SSSS) | Peak Memory (MB) |
-| - | - | - | - | - | - |
-| - | - | - | 1 | 00:02:04.617080 | 4316 MB |
-| - | - | - | 5 | 00:44:56.041497 | 4301 MB |
-| - | - | - | 10 | 02:57:14.253508 | 4616 MB |
+| raster grid (N points) | Raster file | Nr extracted points | buffer (km) | running time (HH:MM:SSSS) | Peak Memory (MB) | Notes |
+| - | - | - | - | - | - | - |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 1 | 00:02:04.617080 | 4316 MB | no dask |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 5 | 00:44:56.041497 | 4301 MB | no dask |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 10 | 02:57:14.253508 | 4616 MB | no dask |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 10 | TBC | TBC | no dask |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 10 | TBC | TBC | no writing output raster |
 
 
 # Dedicated GIS Software
