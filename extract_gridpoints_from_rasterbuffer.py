@@ -21,7 +21,7 @@ Notes:
 - buffers are currently hard-coded at buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
 (Change in main function if needed)
 - resampling with nearest neighbor is fastest method but on can also use linear interpolation 
-To change set parameter resampling_option to one of the following (default Resampling.bilinear):
+To change set parameter resampling_option to one of the following (default Resampling.lanczos):
 
 	Resampling.nearest, 
 	Resampling.bilinear,
@@ -114,9 +114,9 @@ args = ap.parse_args()
 
 if __name__ == "__main__":
 
-	buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
+	buffers = [700, 1000] #[700, 1000, 1500, 2000, 3000, 5000, 10000]
 
-	resampling_option = Resampling.bilinear
+	resampling_option = Resampling.lanczos
 	"""
 	Resampling.nearest, 
 	Resampling.bilinear,
