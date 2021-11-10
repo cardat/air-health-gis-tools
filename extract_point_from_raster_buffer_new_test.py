@@ -1,4 +1,6 @@
 """
+THIS TEST SCRIPT IS SUPERCEDED BY THE NEW SCRIPT:  extract_gridpoints_from_rasterbuffer.py
+
 Simple test script for optimising of raster file conversion to reference grid with raster stats extraction for given buffer around each grid point.
 This method makes use of fast convolution (for buffering) and image reprojection using nearest neighbor for coordinate matching.
 
