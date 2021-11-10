@@ -21,7 +21,14 @@ Notes:
 - buffers are currently hard-coded at buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
 (Change in main function if needed)
 - resampling with nearest neighbor is fastest method but on can also use linear interpolation 
-(for change replace in code  resampling=Resampling.nearest with other method)
+To change set parameter resampling_option to one of the following (default Resampling.bilinear):
+
+	Resampling.nearest, 
+	Resampling.bilinear,
+	Resampling.cubic,
+	Resampling.cubic_spline,
+	Resampling.lanczos,
+	Resampling.average
 
 
 Possible improvements:
@@ -108,6 +115,16 @@ args = ap.parse_args()
 if __name__ == "__main__":
 
 	buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
+
+	resampling_option = Resampling.bilinear
+	"""
+	Resampling.nearest, 
+	Resampling.bilinear,
+	Resampling.cubic,
+	Resampling.cubic_spline,
+	Resampling.lanczos,
+	Resampling.average
+	"""
 
 	fname_raster = str(args.file)
 	fname_grid = str(args.grid)
@@ -200,7 +217,7 @@ if __name__ == "__main__":
 						dst_height=grid_height, 
 						dst_nodata=grid_nodata,
 						src_nodata=src.nodata,
-						resampling=Resampling.nearest)
+						resampling=resampling_option)
 			src.close()
 			dst.close()
 
@@ -245,7 +262,7 @@ if __name__ == "__main__":
 						dst_height=grid_height, 
 						dst_nodata=grid_nodata,
 						src_nodata=src.nodata,
-						resampling=Resampling.nearest)
+						resampling=resampling_option)
 			src.close()
 			dst.close()
 
