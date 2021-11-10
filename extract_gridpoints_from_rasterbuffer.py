@@ -1,9 +1,9 @@
 """
 Script for extracting buffered raster stats averages from input raster at positions of destination grid points.
 
-To optimise the buffer extraction this method makes use 1) of fast convolution incl, taking into accounts nans,
+To optimise the buffer extraction this method makes use 1) of fast convolution incl, taking into accounts nan values,
 and 2) taking advantage of the fact that destination points are distributed in regular grid, 
-so we can take advantage of fitting a grid transformation matrix between original raster and destintion raster
+so we can take advantage of fitting a grid transformation matrix between original raster and destination raster
 instead of using much slower triangulated interpolation for each point. 
 
 Arguments:
@@ -11,7 +11,7 @@ Arguments:
 -g or --grid: path+filename of destination grid raster
 -o or --output: output pathname
 
-how to run:
+HOW TO RUN:
 python3 -f INPUTFILENAME -g DESTINATIONFILENAME -o OUTPATHNAME extract_gridpoints_from_rasterbuffer.py
 
 
@@ -20,15 +20,23 @@ Notes:
 (to disable this function set buffer_min = 0)
 - buffers are currently hard-coded at buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
 (Change in main function if needed)
-- resampling with nearest neighbour is fastest method but on can also use linear interpolation 
+- resampling with nearest neighbor is fastest method but on can also use linear interpolation 
 (for change replace in code  resampling=Resampling.nearest with other method)
 
 
 Possible improvements:
-
 - include automatic crs check and transformation to destination grid crs (now taken into account by fitting transformation with rasterio)
 - automated test of extracted stats for some test points
 - save transformation matrix for reprojection once and reuse for each buffer (--> can speed up computation)
+
+
+Tested with Python 3.9
+
+Requirements:
+
+numpy>=1.20.3
+astropy==4.3.1
+rasterio==1.2.8
 
 
 Author: Sebastian Haan, Nathanial Butterworth
