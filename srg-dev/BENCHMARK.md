@@ -1,5 +1,7 @@
 # Python Approaches
 
+The test are run on a 12 CPUs 32GB RAM machine.
+
 ## Previous code
 | raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
 | - | - | - | - | - | - | - |
@@ -9,7 +11,10 @@
 | ~15Mil | | 1,000 | 10,000 m | 14 s | 660 MB | dask delayed |
 | ~15Mil | | 100,000 | 10,000 m | 29 s | 850 MB | dask delayed |
 
-## Sergio code
+## Latest code
+
+Benchmarks using `benchmark with Nate code.ipynb`, `benchmark with Nate code - Dask.ipynb` notebooks:
+
 | raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
 | - | - | - | - | - | - | - |
 | ~1Mil | apg18e_APPMA_NSW.tif | 1,000 | 10,000 m | 2.2s | 219 MB | dask dataframe multiprocess scheduler, improved extraction function, without mem profiler (1.7 sec)|
@@ -18,8 +23,18 @@
 | ~15Mil | | 1,000 | 10,000 m | 40 s | 390 MB | no dask dataframe |
 | ~15Mil | | 1,000 | 10,000 m | 18 s | 390 MB | dask dataframe multiprocess scheduler |
 | ~15Mil | | 1,000 | 10,000 m | 6 s | 390 MB | dask dataframe multiprocess scheduler, improved extraction function |
-| ~100Mil | | ~100Mil | 10,000 m | 473 s | 2490 MB | no dask dataframe |
-| ~100Mil | | ~100Mil | 10,000 m | 59 s | 1300 MB | no writing output raster |
+
+Benchmarks using 99Mil grid and `calculate_focal_mean.py` script:
+
+| raster grid (N points) | Raster file | Nr extracted points | buffer (km) | running time (HH:MM:SSSS) | Peak Memory (MB) | Notes |
+| - | - | - | - | - | - | - |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 1 | 00:02:28.453262 | 4316 MB | no dask, writing file |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 5 | 00:44:56.041497 | 4301 MB | no dask, writing file |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 10 | 02:57:14.253508 | 4616 MB | no dask, writing file |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 1 | 00:02:28.754381 | na | no dask, no writing file |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 1 | 00:00:31.387356 | na | dask, no writing file |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 1 | TBC | na | dask, writing file |
+| ~100Mil | apg18e_1_0_0_20210512.tif | ~100Mil | 10 | 00:00:36.865079 | na | dask, no writing file |
 
 
 # Dedicated GIS Software
@@ -32,7 +47,7 @@ In QGIS, you are limited to specifying it in terms of the number of cells, and i
 
 ArcGIS Pro and QGIS appear to perform identically for 1000 meter buffer extractions, however QGIS consumes far less memory.
 
-For buffers of 10000 meters, QGIS becomes non responsive and crashes. 
+For buffers of 10000 meters, QGIS becomes non responsive and crashes.
 It is unclear why this happens.
 ArcGIS Pro on the other hand only takes slightly less time to process the 10000 m buffer, despite the fact that there should be 100x more pixels to calculate in the buffer.
 
