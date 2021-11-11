@@ -1,5 +1,7 @@
 # Python Approaches
 
+The test are run on a 12 CPUs 32GB RAM machine.
+
 ## Previous code
 | raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
 | - | - | - | - | - | - | - |
