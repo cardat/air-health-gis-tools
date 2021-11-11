@@ -69,8 +69,8 @@ def buffer_convolve(x,buffer):
 	#print(np.shape(kernel))
 
 	#Run the convolution over the entire array with the buffer kernel
-	neighbor_sum = convolve(x, kernel, boundary='fill', fill_value=0,
-		normalize_kernel=False,nan_treatment='fill',preserve_nan=True)
+	neighbor_sum = convolve(x, kernel, boundary='extend', fill_value=0,
+		normalize_kernel=False,nan_treatment='fill',preserve_nan=False)
 	#Sum up the number of cells used in the kernel (to find area)
 	num_neighbor = np.count_nonzero(kernel)
 
@@ -82,7 +82,7 @@ def buffer_convolve2(x,buffer):
 	# use default uniform circle (Tophat2DKernel) rather than custom mask, need nromalization
 	kernel = Tophat2DKernel(buffer) 
 	neighbor_sum = convolve(x, kernel, boundary='fill', fill_value=0,
-		normalize_kernel=False,nan_treatment='fill',preserve_nan=True)
+		normalize_kernel=False,nan_treatment='fill',preserve_nan=False)
 	#Sum up the number of cells used in the kernel (to find area)
 	num_neighbor = np.count_nonzero(kernel)
 	#Return the density (sum/area)
