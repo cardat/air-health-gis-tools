@@ -7,12 +7,13 @@ so we can take advantage of fitting a grid transformation matrix between origina
 instead of using much slower triangulated interpolation for each point. 
 
 Arguments:
--f or --file: path+filename of input raster (buffered stats exatracted from this)
+-d or --data: path+filename of input raster that contains the data you want to extract (buffered stats extracted from this)
 -g or --grid: path+filename of destination grid raster
+-b or --buffer: buffer size in meters
 -o or --output: output pathname
 
 HOW TO RUN:
-python3 -f INPUTFILENAME -g DESTINATIONFILENAME -o OUTPATHNAME extract_gridpoints_from_rasterbuffer.py
+python3 -d INPUTFILENAME -g DESTINATIONFILENAME -b 1000 -o OUTPATHNAME extract_gridpoints_from_rasterbuffer.py
 
 
 Notes: 
@@ -23,8 +24,7 @@ Notes:
 		a)  If buffer size is larger/smaller than raster resolution (Method1/Method2)
 		b)  If raster resolution larger/smaller than grid resolution (Method2/Method1)
 	- or user can force the fast compute option with first method (convolution first) setting fast_compute = True (in main function)
-- buffers are currently hard-coded at buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
-(Change in main function if needed)
+- buffers must be > 0 meters
 - resampling with nearest neighbor is fastest method but on can also use linear interpolation 
 To change set parameter resampling_option to one of the following (default Resampling.bilinear):
 	Resampling.nearest, 
@@ -107,8 +107,9 @@ ap = argparse.ArgumentParser()
 # ap.add_argument("-f","--file", default = "./data/ABS1x1km_Aus_Pop_Grid_2006_2020/data_provided/*.tif", type=Path)
 # ap.add_argument("-g","--grid", default = "./data/AUS_points_5km.rds", type=Path)
 # ap.add_argument("-o","--output", default = "./output", type=Path)
-ap.add_argument("-f","--file", default = "./data/apg18e_1_0_0_20210512.tif", type=Path)
+ap.add_argument("-d","--data", default = "./data/apg18e_1_0_0_20210512.tif", type=Path)
 ap.add_argument("-g","--grid", default = "./data/grid_to_do_APMMA_NSW_20211018.tif", type=Path)
+ap.add_argument("-b","--buffers", default = [700,1000,10000] ,nargs="*", type=int, help = "List of one or more buffers in meters to extract.")
 ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
 
@@ -120,7 +121,8 @@ args = ap.parse_args()
 
 if __name__ == "__main__":
 
-	buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
+	buffers = args.buffers
+	print("Buffers (meters): %r" % args.buffers )
 
 	fast_compute = False
 	"""
@@ -132,7 +134,7 @@ if __name__ == "__main__":
 	Resampling.average
 	"""
 
-	fname_raster = str(args.file)
+	fname_raster = str(args.data)
 	fname_grid = str(args.grid)
 	if not os.path.exists(fname_raster):
 		print(f'{fname_raster} does not exist')
@@ -217,7 +219,7 @@ if __name__ == "__main__":
 
 	for buff in buffers:
 		# Define output image name:
-		fname_final_out = os.path.join(outpath, args.file.stem + '_buffer-' + str(buff) + 'm.tif')
+		fname_final_out = os.path.join(outpath, args.data.stem + '_buffer-' + str(buff) + 'm.tif')
 		if (data_xres <= grid_xres) | (buff >= 2 * buffer_min) | fast_compute:
 			# Method 1 (Convolution, then reprojection):
 			resampling_option = Resampling.lanczos
