@@ -72,7 +72,7 @@ We want to extract information from a data raster layer of population density, f
 The extraction script can easily be controlled using a command line interface:
 
 ```bash
-python extract_raster_buffer.py -d <path/filename of data raster> -g <path/filename of grid raster> -b <list of one or more buffers> -o <output folder>
+python extract_raster_buffer.py -d <path/filename of data raster> -g <path/filename of grid raster>  -b <list of one or more buffers> -o <output folder>
 ```
 
 Using our example scenario, if we want to extract for 700m, 1km and 10km buffers, we would run:
