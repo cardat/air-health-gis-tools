@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
 	if (data_xres > grid_xres) & (min(buffers) < 2*buffer_min) & (~fast_compute):
 		# Generate first a reprojected array
-		resampling_option = Resampling.bilinear
+		resampling_option = Resampling.lanczos
 		t1_warp = time.time()
 		print(f"Coordinate conversion and resampling ...")
 		with rasterio.open(fname_raster) as src:
@@ -218,7 +218,7 @@ if __name__ == "__main__":
 		fname_final_out = os.path.join(outpath, args.file.stem + '_buffer-' + str(buff) + 'm.tif')
 		if (data_xres <= grid_xres) | (buff >= 2 * buffer_min) | fast_compute:
 			# Method 1 (Convolution, then reprojection):
-			resampling_option = Resampling.bilinear
+			resampling_option = Resampling.lanczos
 			# only convolve is if buffer is large than raster resolution
 			b=np.ceil(buff/data_xres)
 			t1=time.time()
