@@ -52,24 +52,7 @@ The performance figures quoted in this Readme will be measured on a machine with
 
 ## Testing Scenario
 
-For the purposes of testing these scripts, we will use a sample of points from the NSW 1km grid.
-
-This sample was generated with the following R code:
-
-```
-library(here)
-library(tidyverse)
-
-nsw_points_1km <- readRDS(here("data","grids","NSW_points_1km.rds")) %>%
-  dplyr::mutate(FID = as.integer(FID),
-                X = x,
-                Y = y) %>% 
-  dplyr::select(FID,X,Y)
-  
-testing_points <- nsw_points_1km[sample(nrow(nsw_points_1km), 100),]
-
-saveRDS(testing_points, here("data","grids","testing_points.rds") 
-```
+For demonstrating th
 
 ## extract_points_from_raster_buffer.py
 
