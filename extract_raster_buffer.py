@@ -107,6 +107,7 @@ ap = argparse.ArgumentParser()
 # ap.add_argument("-o","--output", default = "./output", type=Path)
 ap.add_argument("-f","--file", default = "./data/apg18e_1_0_0_20210512.tif", type=Path)
 ap.add_argument("-g","--grid", default = "./data/grid_to_do_APMMA_NSW_20211018.tif", type=Path)
+ap.add_argument("-b","--buffers", default = [700,1000,10000] ,nargs="*", type=int, help = "List of one or more buffers in meters to extract.")
 ap.add_argument("-o","--output", default = "./output", type=Path)
 args = ap.parse_args()
 
@@ -118,7 +119,9 @@ args = ap.parse_args()
 
 if __name__ == "__main__":
 
-	buffers = [10000]
+	buffers = args.buffers
+
+	print("Buffers (meters): %r" % args.buffers )
 
 	fast_compute = False
 	"""
