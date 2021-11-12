@@ -82,20 +82,29 @@ python extract_raster_buffer.py -d ./data/apg18e_1_0_0_20210512.tif -g ./data/gr
 
 ### Benchmarking
 
+We developed two Python scripts to do the same task in slightly different ways, however for the purposes of space we will compare the fastest approach vs the leading GUI tools.
 
+**Python**
+| raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
+| - | - | - | - | - | - | - |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 1,000 m | 20 s | 3900 MB | |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 10,000 m | 29 s | 3900 MB | |
+
+**ArcGIS Pro**
+| raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
+| - | - | - | - | - | - | - |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 1,000 m | 95 s | 5200 MB | ArcGIS Pro GUI actions added up together |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 10,000 m | 116 s | 5200 MB | ArcGIS Pro GUI actions added up together |
+
+**QGIS**
+| raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
+| - | - | - | - | - | - | - |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 1,000 m | 80 s | 632 MB | QGIS GUI actions added up together |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 10,000 m | Crash | NA | QGIS GUI actions added up together |
+
+From this, we can see that the Python approach is much faster than either GUI tool.
 
 #### Dedicated GIS Software
-
-##### ArcGIS Pro
-| raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
-| - | - | - | - | - | - | - |
-| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 1,000 m | 60 s | 5200 MB | ArcGIS Pro GUI actions added up together |
-| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 10,000 m | 81 s | 5200 MB | ArcGIS Pro GUI actions added up together |
-##### QGIS
-| raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
-| - | - | - | - | - | - | - |
-| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 1,000 m | 60 s | 632 MB | QGIS GUI actions added up together |
-| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 10,000 m | Crash | NA | QGIS GUI actions added up together |
 
 Both leading GIS GUI tools take about the same amount of time to do the necessary pre-processing steps of loading rasters, clipping to a matching extent, reprojecting, and resampling.
 
