@@ -4,6 +4,7 @@
   * [Introduction](#introduction)
   * [Installation](#installation)
   * [Technical Requirements](#technical-requirements)
+  * [Acknowledgement](#acknowledgement)
   * [Old Readme](#old-readme)
 
 ## Introduction
@@ -79,6 +80,22 @@ This python script is built to query points in a raster and extract data from mu
 Using the NSW 1km grid, the script took 444.33 seconds to extract data for all buffers for 14 different 2.5 mb raster layers. 
 
 If we extrapolate this performance out to include all 72 layers, assuming each layer is equally easy to extract, processing all would take over 8 hours.
+
+## Acknowledgement
+
+The use of the SIH services including the Artemis HPC and associated support and training warrants acknowledgement in any publications, conference proceedings or posters describing work facilitated by these services.
+
+The continued acknowledgment of the use of SIH facilities ensures the sustainability of our services.
+
+Please seek our approval and send us a submission draft before including SIH staff as authors in any publications.
+
+> The authors acknowledge the technical assistance provided by the Sydney Informatics Hub, a Core Research Facility of the University of Sydney.
+
+Acknowledging specific staff:
+
+> The authors acknowledge the technical assistance of (name of staff) of the Sydney Informatics Hub, a Core Research Facility of the University of Sydney.
+
+For further information about acknowledging the Sydney Informatics Hub, please contact us at sih.info@sydney.edu.au.
 
 ## Old Readme
 
