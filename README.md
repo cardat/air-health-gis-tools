@@ -80,6 +80,34 @@ Using our example scenario, if we want to extract for 700m, 1km and 10km buffers
 python extract_raster_buffer.py -d ./data/apg18e_1_0_0_20210512.tif -g ./data/grid_to_do_APMMA_NSW_20211018.tif -b 700 1000 10000
 ```
 
+### Benchmarking
+
+
+
+#### Dedicated GIS Software
+
+##### ArcGIS Pro
+| raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
+| - | - | - | - | - | - | - |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 1,000 m | 60 s | 5200 MB | ArcGIS Pro GUI actions added up together |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 10,000 m | 81 s | 5200 MB | ArcGIS Pro GUI actions added up together |
+##### QGIS
+| raster grid (N points) | Raster file | Nr extracted points | buffer | time | peak memory | Notes |
+| - | - | - | - | - | - | - |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 1,000 m | 60 s | 632 MB | QGIS GUI actions added up together |
+| ~100Mil | apg18e_APPMA_NSW.tif | ~100Mil | 10,000 m | Crash | NA | QGIS GUI actions added up together |
+
+Both leading GIS GUI tools take about the same amount of time to do the necessary pre-processing steps of loading rasters, clipping to a matching extent, reprojecting, and resampling.
+
+For the actual task of extracting points from a buffer, we used Focal Statistics in ArcGIS Pro and r.neighbors in QGIS.
+From a usability standpoint, the ESRI implementation of convolving is more user friendly as the user can specify the size of the focal window in map units (e.g. meters).
+In QGIS, you are limited to specifying it in terms of the number of cells, and it must be an odd number.
+
+ArcGIS Pro and QGIS appear to perform identically for 1000 meter buffer extractions, however QGIS consumes far less memory.
+
+For buffers of 10000 meters, QGIS becomes non responsive and crashes.
+It is unclear why this happens.
+ArcGIS Pro on the other hand only takes slightly less time to process the 10000 m buffer, despite the fact that there should be 100x more pixels to calculate in the buffer.
 
 
 ## Acknowledgement
