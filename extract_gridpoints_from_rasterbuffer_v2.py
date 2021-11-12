@@ -51,6 +51,8 @@ rasterio==1.2.8
 
 
 Author: Sebastian Haan, Nathanial Butterworth
+
+Copyright 2021 The University of Sydney
 """
 
 
