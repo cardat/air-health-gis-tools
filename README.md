@@ -4,14 +4,20 @@
   * [Introduction](#introduction)
   * [Installation](#installation)
   * [Technical Requirements](#technical-requirements)
+  * [User Guide](#user-guide)
   * [Acknowledgement](#acknowledgement)
   * [Old Readme](#old-readme)
 
 ## Introduction
 
-This repository contains code related to extracting and wrangling GIS data from a wide variety of sources selected by researchers at the Centre for Air pollution, energy and health Research Data Analysis Technology.
+This repository contains code for replicating an ArcGIS Pro GIS data exraction workflow in Python, for use by researchers at the Centre for Air pollution, energy and health Research Data Analysis Technology (CARDAT).
 
-
+The workflow involves:
+1. Loading in a grid raster and data raster layer.
+2. Cropping the data raster to the same extent as the grid raster.
+3. Reprojecting and resampling the data raster to the same projection and resolution as the grid raster.
+4. Calculating mean values for the data raster within buffers around each pixel in the grid raster.
+5. Saving results as rasters.
 
 ## Installation
 
@@ -50,19 +56,31 @@ For development, extractions were tested locally on a macOS machine with the fol
 
 The performance figures quoted in this Readme will be measured on a machine with those specs; expect potential decreases in performance with reduced processor and memory power.
 
-## Testing Scenario
+## User Guide
 
-For demonstrating th
+### Example Scenario
 
-## extract_points_from_raster_buffer.py
+For demonstrating how to use these python scripts, and comparing against performance with industry standard GUI tools like ArcGIS Pro, we will use the example use case.
 
-This python script is built to query points in a raster and extract data from multiple buffers.
+In this scenario, we have a grid raster file that has 113m pixels the cover the extent of New South Wales. 
+This grid has approximately 100 million pixels.
 
-### Performance Testing
+We want to extract information from a data raster layer of population density, from the Australian Bureau of Statistics. This raster is natively at 1km resolution.
 
-Using the NSW 1km grid, the script took 444.33 seconds to extract data for all buffers for 14 different 2.5 mb raster layers. 
+### Basic usage
 
-If we extrapolate this performance out to include all 72 layers, assuming each layer is equally easy to extract, processing all would take over 8 hours.
+The extraction script can easily be controlled using a command line interface:
+
+```bash
+python extract_raster_buffer.py -d <path/filename of data raster> -g <path/filename of grid raster> -b <list of one or more buffers> -o <output folder>
+```
+
+Using our example scenario, if we want to extract for 700m, 1km and 10km buffers, we would run:
+```bash
+python extract_raster_buffer.py -d ./data/apg18e_1_0_0_20210512.tif -g ./data/grid_to_do_APMMA_NSW_20211018.tif -b 700 1000 10000
+```
+
+
 
 ## Acknowledgement
 
