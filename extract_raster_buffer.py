@@ -118,7 +118,7 @@ args = ap.parse_args()
 
 if __name__ == "__main__":
 
-	buffers = [700, 1000, 1500, 2000, 3000, 5000, 10000]
+	buffers = [10000]
 
 	fast_compute = False
 	"""
