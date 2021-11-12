@@ -5,8 +5,8 @@
   * [Installation](#installation)
   * [Technical Requirements](#technical-requirements)
   * [User Guide](#user-guide)
+  * [Benchmarking](#benchmarking)
   * [Acknowledgement](#acknowledgement)
-  * [Old Readme](#old-readme)
 
 ## Introduction
 
@@ -80,7 +80,7 @@ Using our example scenario, if we want to extract for 700m, 1km and 10km buffers
 python extract_raster_buffer.py -d ./data/apg18e_1_0_0_20210512.tif -g ./data/grid_to_do_APMMA_NSW_20211018.tif -b 700 1000 10000
 ```
 
-### Benchmarking
+## Benchmarking
 
 We developed two Python scripts to do the same task in slightly different ways, however for the purposes of space we will compare the fastest approach vs the leading GUI tools.
 
@@ -134,13 +134,3 @@ Acknowledging specific staff:
 > The authors acknowledge the technical assistance of (name of staff) of the Sydney Informatics Hub, a Core Research Facility of the University of Sydney.
 
 For further information about acknowledging the Sydney Informatics Hub, please contact us at sih.info@sydney.edu.au.
-
-## Old Readme
- 
-### Considerations
-
-The radius of the buffer may intersect a raster cell. In this case the raster cell is included within the buffer calc if it less than  ceil(buffer/cell size)
-
-Ivan has suggested converting all underlying grids/shapefiles/polygons to a single file format. This could be a good way forward as the routine for for extracting from a raster is pretty good now.
-
-The 5 generic types of GIS extractions are all listed as "extract_<geospatial_feature>.py". These will be templates to make a script for each of the layers listed in the xlsx. I think each layer will need to be approached uniquely though, as small things like band names, file-naming conventions, will all be different (bringing us back to the approach sugested by Ivan to homogenise the inputs). So far only, 1 layer is finished in the Examples folder.
